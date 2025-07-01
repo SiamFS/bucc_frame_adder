@@ -63,12 +63,25 @@ const ImageEditor = () => {
   const [notification, setNotification] = useState(null)
   const [isAdvancedMode, setIsAdvancedMode] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  
+  // Enhanced gesture state for pinch-to-zoom and smooth panning
+  const [isPinching, setIsPinching] = useState(false)
+  const [initialPinchDistance, setInitialPinchDistance] = useState(0)
+  const [initialZoom, setInitialZoom] = useState(1)
+  const [isInertiaActive, setIsInertiaActive] = useState(false)
 
   // Refs with performance considerations
   const canvasRef = useRef(null)
   const backgroundInputRef = useRef(null)
   const animationFrameRef = useRef(null)
   const workerRef = useRef(null)
+  
+  // Enhanced gesture handling refs
+  const lastPositionRef = useRef({ x: 0, y: 0 })
+  const velocityRef = useRef({ x: 0, y: 0 })
+  const inertiaAnimationRef = useRef(null)
+  const touchStartTimeRef = useRef(0)
+  const gestureStartRef = useRef({ zoom: 1, position: { x: 0, y: 0 } })
 
   // Memoized constants for performance
   const CANVAS_CONFIGS = useMemo(() => ({
@@ -345,7 +358,21 @@ const ImageEditor = () => {
     animationFrameRef.current = requestAnimationFrame(updateCanvas)
   }, [drawCanvas])
 
-  // Enhanced touch and mouse support for mobile
+  // Enhanced touch and gesture utilities
+  const getTouchDistance = useCallback((touch1, touch2) => {
+    const dx = touch1.clientX - touch2.clientX
+    const dy = touch1.clientY - touch2.clientY
+    return Math.sqrt(dx * dx + dy * dy)
+  }, [])
+
+  const getTouchCenter = useCallback((touch1, touch2) => {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    }
+  }, [])
+
+  // Enhanced event position with multi-touch support
   const getEventPosition = useCallback((e) => {
     const canvas = canvasRef.current
     if (!canvas) return { x: 0, y: 0 }
@@ -354,7 +381,16 @@ const ImageEditor = () => {
     const scaleX = canvasSize.width / rect.width
     const scaleY = canvasSize.height / rect.height
 
-    // Handle both touch and mouse events
+    // Handle multi-touch for pinch gestures
+    if (e.touches && e.touches.length >= 2) {
+      const center = getTouchCenter(e.touches[0], e.touches[1])
+      return {
+        x: (center.x - rect.left) * scaleX,
+        y: (center.y - rect.top) * scaleY
+      }
+    }
+
+    // Handle single touch or mouse
     const clientX = e.touches ? e.touches[0].clientX : e.clientX
     const clientY = e.touches ? e.touches[0].clientY : e.clientY
 
@@ -362,123 +398,202 @@ const ImageEditor = () => {
       x: (clientX - rect.left) * scaleX,
       y: (clientY - rect.top) * scaleY
     }
-  }, [canvasSize])
+  }, [canvasSize, getTouchCenter])
 
-  // Constrain position to keep image within boundaries
-  const constrainPosition = useCallback((newPosition, currentZoom) => {
-    if (!backgroundImage) return newPosition
 
-    // Calculate boundary dimensions
-    let boundaryWidth = canvasSize.width
-    let boundaryHeight = canvasSize.height
-    let boundaryX = 0
-    let boundaryY = 0
 
-    // If frame exists, use frame boundaries; otherwise use canvas boundaries
-    if (frameImage) {
-      const frameAspectRatio = frameImage.width / frameImage.height
-      const canvasAspectRatio = canvasSize.width / canvasSize.height
+  // Smooth inertia animation for natural movement
+  const applyInertia = useCallback(() => {
+    if (!isInertiaActive || !backgroundImage) return
 
-      if (frameAspectRatio > canvasAspectRatio) {
-        // Frame is wider - fit to canvas width
-        boundaryWidth = canvasSize.width
-        boundaryHeight = canvasSize.width / frameAspectRatio
-        boundaryY = (canvasSize.height - boundaryHeight) / 2
-      } else {
-        // Frame is taller - fit to canvas height
-        boundaryHeight = canvasSize.height
-        boundaryWidth = canvasSize.height * frameAspectRatio
-        boundaryX = (canvasSize.width - boundaryWidth) / 2
+    const friction = 0.92
+    const minVelocity = 0.1
+
+    velocityRef.current.x *= friction
+    velocityRef.current.y *= friction
+
+    if (Math.abs(velocityRef.current.x) < minVelocity && Math.abs(velocityRef.current.y) < minVelocity) {
+      setIsInertiaActive(false)
+      return
+    }
+
+    setPosition(prev => ({
+      x: prev.x + velocityRef.current.x,
+      y: prev.y + velocityRef.current.y
+    }))
+
+    inertiaAnimationRef.current = requestAnimationFrame(applyInertia)
+  }, [isInertiaActive, backgroundImage])
+
+  // Start inertia effect
+  useEffect(() => {
+    if (isInertiaActive) {
+      inertiaAnimationRef.current = requestAnimationFrame(applyInertia)
+    }
+    return () => {
+      if (inertiaAnimationRef.current) {
+        cancelAnimationFrame(inertiaAnimationRef.current)
       }
     }
+  }, [isInertiaActive, applyInertia])
 
-    const imgWidth = backgroundImage.width * currentZoom
-    const imgHeight = backgroundImage.height * currentZoom
-    
-    // Calculate image position with new position offset
-    const imgX = (canvasSize.width - imgWidth) / 2 + newPosition.x
-    const imgY = (canvasSize.height - imgHeight) / 2 + newPosition.y
-
-    // Constrain image to stay within boundaries
-    let constrainedX = newPosition.x
-    let constrainedY = newPosition.y
-
-    // Always apply constraints to prevent image from going outside boundaries
-    // Check left boundary
-    if (imgX < boundaryX) {
-      constrainedX = newPosition.x + (boundaryX - imgX)
-    }
-    // Check right boundary
-    if (imgX + imgWidth > boundaryX + boundaryWidth) {
-      constrainedX = newPosition.x - ((imgX + imgWidth) - (boundaryX + boundaryWidth))
-    }
-    // Check top boundary
-    if (imgY < boundaryY) {
-      constrainedY = newPosition.y + (boundaryY - imgY)
-    }
-    // Check bottom boundary
-    if (imgY + imgHeight > boundaryY + boundaryHeight) {
-      constrainedY = newPosition.y - ((imgY + imgHeight) - (boundaryY + boundaryHeight))
-    }
-    
-    // If image is smaller than boundary, keep it centered within bounds
-    if (imgWidth < boundaryWidth) {
-      const maxOffsetX = (boundaryWidth - imgWidth) / 2
-      constrainedX = Math.max(-maxOffsetX, Math.min(maxOffsetX, constrainedX))
-    }
-    if (imgHeight < boundaryHeight) {
-      const maxOffsetY = (boundaryHeight - imgHeight) / 2
-      constrainedY = Math.max(-maxOffsetY, Math.min(maxOffsetY, constrainedY))
-    }
-
-    return { x: constrainedX, y: constrainedY }
-  }, [backgroundImage, frameImage, canvasSize])
-
+  // Enhanced gesture start handler with pinch detection
   const handleStart = useCallback((e) => {
     if (!backgroundImage) return
     e.preventDefault()
     
+    // Stop any ongoing inertia
+    setIsInertiaActive(false)
+    if (inertiaAnimationRef.current) {
+      cancelAnimationFrame(inertiaAnimationRef.current)
+    }
+
+    const currentTime = Date.now()
+    touchStartTimeRef.current = currentTime
+    
+    // Handle pinch gesture start
+    if (e.touches && e.touches.length === 2) {
+      setIsPinching(true)
+      setIsDragging(false)
+      
+      const distance = getTouchDistance(e.touches[0], e.touches[1])
+      setInitialPinchDistance(distance)
+      setInitialZoom(zoom)
+      
+      const center = getEventPosition(e)
+      gestureStartRef.current = {
+        zoom: zoom,
+        position: { ...position },
+        center: center
+      }
+      
+      return
+    }
+
+    // Handle single touch/mouse drag
     setIsDragging(true)
+    setIsPinching(false)
+    
     const pos = getEventPosition(e)
     setDragStart({
       x: pos.x - position.x,
       y: pos.y - position.y
     })
-  }, [backgroundImage, position, getEventPosition])
+    
+    lastPositionRef.current = pos
+    velocityRef.current = { x: 0, y: 0 }
+  }, [backgroundImage, position, zoom, getEventPosition, getTouchDistance])
 
+  // Enhanced move handler with pinch-to-zoom and smooth panning
   const handleMove = useCallback((e) => {
-    if (!isDragging || !backgroundImage) return
+    if (!backgroundImage) return
     e.preventDefault()
     
+    const currentTime = Date.now()
     const pos = getEventPosition(e)
-    const newPosition = {
-      x: pos.x - dragStart.x,
-      y: pos.y - dragStart.y
-    }
-    
-    // Apply constraints if frame exists
-    const constrainedPosition = constrainPosition(newPosition, zoom)
-    setPosition(constrainedPosition)
-  }, [isDragging, backgroundImage, dragStart, getEventPosition, constrainPosition, zoom])
 
+    // Handle pinch zoom
+    if (e.touches && e.touches.length === 2 && isPinching) {
+      const distance = getTouchDistance(e.touches[0], e.touches[1])
+      if (initialPinchDistance > 0) {
+        const scale = distance / initialPinchDistance
+        const newZoom = Math.max(0.1, Math.min(10, initialZoom * scale))
+        
+        // Calculate zoom center point for natural zooming
+        const zoomCenter = gestureStartRef.current.center
+        
+        // Adjust position based on zoom center
+        const zoomRatio = newZoom / gestureStartRef.current.zoom
+        const deltaX = (zoomCenter.x - canvasSize.width / 2) * (1 - zoomRatio)
+        const deltaY = (zoomCenter.y - canvasSize.height / 2) * (1 - zoomRatio)
+        
+        setZoom(newZoom)
+        setPosition({
+          x: gestureStartRef.current.position.x + deltaX,
+          y: gestureStartRef.current.position.y + deltaY
+        })
+      }
+      return
+    }
+
+    // Handle single touch/mouse drag with full freedom
+    if (isDragging && !isPinching) {
+      const newPosition = {
+        x: pos.x - dragStart.x,
+        y: pos.y - dragStart.y
+      }
+      
+      // Calculate velocity for inertia
+      const deltaTime = Math.max(1, currentTime - touchStartTimeRef.current)
+      const deltaX = pos.x - lastPositionRef.current.x
+      const deltaY = pos.y - lastPositionRef.current.y
+      
+      velocityRef.current = {
+        x: deltaX / deltaTime * 16, // Normalize to 60fps
+        y: deltaY / deltaTime * 16
+      }
+      
+      // Apply position with full freedom (no constraints)
+      setPosition(newPosition)
+      lastPositionRef.current = pos
+    }
+  }, [isDragging, isPinching, backgroundImage, dragStart, getEventPosition, getTouchDistance, initialPinchDistance, initialZoom, canvasSize])
+
+  // Enhanced end handler with inertia
   const handleEnd = useCallback((e) => {
     e.preventDefault()
-    setIsDragging(false)
-  }, [])
+    
+    const currentTime = Date.now()
+    const timeSinceStart = currentTime - touchStartTimeRef.current
 
-  // Wheel zoom support
+    if (isDragging && timeSinceStart > 50) {
+      // Apply inertia if movement was significant
+      const velocityMagnitude = Math.sqrt(
+        velocityRef.current.x * velocityRef.current.x + 
+        velocityRef.current.y * velocityRef.current.y
+      )
+      
+      if (velocityMagnitude > 2) {
+        setIsInertiaActive(true)
+      }
+    }
+    
+    setIsDragging(false)
+    setIsPinching(false)
+    setInitialPinchDistance(0)
+  }, [isDragging])
+
+  // Enhanced wheel zoom with smooth scaling
   const handleWheel = useCallback((e) => {
     if (!backgroundImage) return
     e.preventDefault()
     
-    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
-    const newZoom = Math.max(0.1, Math.min(5, zoom * zoomFactor))
+    const canvas = canvasRef.current
+    if (!canvas) return
     
-    // Apply constraints after zoom change
-    const constrainedPosition = constrainPosition(position, newZoom)
+    const rect = canvas.getBoundingClientRect()
+    const zoomPoint = {
+      x: (e.clientX - rect.left) * (canvasSize.width / rect.width),
+      y: (e.clientY - rect.top) * (canvasSize.height / rect.height)
+    }
+    
+    // Smooth zoom with better sensitivity
+    const zoomSensitivity = 0.001
+    const zoomDelta = -e.deltaY * zoomSensitivity
+    const zoomFactor = Math.exp(zoomDelta)
+    const newZoom = Math.max(0.1, Math.min(10, zoom * zoomFactor))
+    
+    // Zoom towards cursor/touch point
+    const zoomRatio = newZoom / zoom
+    const deltaX = (zoomPoint.x - canvasSize.width / 2) * (1 - zoomRatio)
+    const deltaY = (zoomPoint.y - canvasSize.height / 2) * (1 - zoomRatio)
+    
     setZoom(newZoom)
-    setPosition(constrainedPosition)
-  }, [backgroundImage, zoom, position, constrainPosition])
+    setPosition(prev => ({
+      x: prev.x + deltaX,
+      y: prev.y + deltaY
+    }))
+  }, [backgroundImage, zoom, position, canvasSize])
 
   // Enhanced download with quality options
   const handleDownload = useCallback(async (quality = 1.0) => {
@@ -680,6 +795,12 @@ const ImageEditor = () => {
             )}
             
             {backgroundImage && (
+              <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded pointer-events-none">
+                Drag • Pinch • Scroll for full freedom
+              </div>
+            )}
+            
+            {backgroundImage && (
               <div className="absolute bottom-2 left-2 lg:bottom-4 lg:left-4 bg-black/70 text-white px-3 py-2 lg:px-4 lg:py-2 rounded-lg text-xs lg:text-sm backdrop-blur-sm">
                 <div className="flex items-center gap-2">
                   <span className="hidden sm:inline">📱 Drag to move • 🔍 Scroll to zoom</span>
@@ -860,17 +981,20 @@ const ImageEditor = () => {
               <input
                 type="range"
                 min="0.1"
-                max="3"
+                max="10"
                 step="0.1"
                 value={zoom}
                 onChange={(e) => {
                   const newZoom = parseFloat(e.target.value)
-                  const constrainedPosition = constrainPosition(position, newZoom)
                   setZoom(newZoom)
-                  setPosition(constrainedPosition)
                 }}
                 className="w-full slider"
               />
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>0.1x</span>
+                <span>1x</span>
+                <span>10x</span>
+              </div>
             </div>
 
             {/* Brightness Control */}
@@ -951,3 +1075,5 @@ const ImageEditor = () => {
 }
 
 export default ImageEditor
+
+
