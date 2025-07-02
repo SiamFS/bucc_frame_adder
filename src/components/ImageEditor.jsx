@@ -347,8 +347,10 @@ const ImageEditor = () => {
     ctx.imageSmoothingQuality = 'high'
 
     // Calculate frame display dimensions (preserve aspect ratio)
-    let frameDisplayWidth = canvasSize.width
-    let frameDisplayHeight = canvasSize.height
+    // Apply 8% margin to prevent frame from touching preview boundaries
+    const FRAME_MARGIN = 0.92 // 8% reduction for comfortable margin
+    let frameDisplayWidth = canvasSize.width * FRAME_MARGIN
+    let frameDisplayHeight = canvasSize.height * FRAME_MARGIN
     let frameX = 0
     let frameY = 0
 
@@ -357,17 +359,17 @@ const ImageEditor = () => {
       const canvasAspectRatio = canvasSize.width / canvasSize.height
 
       if (frameAspectRatio > canvasAspectRatio) {
-        // Frame is wider - fit to canvas width
-        frameDisplayWidth = canvasSize.width
-        frameDisplayHeight = canvasSize.width / frameAspectRatio
-        frameX = 0
+        // Frame is wider - fit to canvas width with margin
+        frameDisplayWidth = canvasSize.width * FRAME_MARGIN
+        frameDisplayHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
+        frameX = (canvasSize.width - frameDisplayWidth) / 2
         frameY = (canvasSize.height - frameDisplayHeight) / 2
       } else {
-        // Frame is taller - fit to canvas height
-        frameDisplayHeight = canvasSize.height
-        frameDisplayWidth = canvasSize.height * frameAspectRatio
+        // Frame is taller - fit to canvas height with margin
+        frameDisplayHeight = canvasSize.height * FRAME_MARGIN
+        frameDisplayWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
         frameX = (canvasSize.width - frameDisplayWidth) / 2
-        frameY = 0
+        frameY = (canvasSize.height - frameDisplayHeight) / 2
       }
     }
 
@@ -707,8 +709,10 @@ const ImageEditor = () => {
       setProcessingProgress(25)
 
       // Calculate frame dimensions for export (preserve aspect ratio)
-      let frameExportWidth = canvasSize.width
-      let frameExportHeight = canvasSize.height
+      // Apply same 8% margin as preview to ensure consistency
+      const FRAME_MARGIN = 0.92 // 8% reduction for comfortable margin
+      let frameExportWidth = canvasSize.width * FRAME_MARGIN
+      let frameExportHeight = canvasSize.height * FRAME_MARGIN
       let frameExportX = 0
       let frameExportY = 0
 
@@ -717,15 +721,17 @@ const ImageEditor = () => {
         const canvasAspectRatio = canvasSize.width / canvasSize.height
 
         if (frameAspectRatio > canvasAspectRatio) {
-          // Frame is wider - fit to canvas width
-          frameExportWidth = canvasSize.width
-          frameExportHeight = canvasSize.width / frameAspectRatio
+          // Frame is wider - fit to canvas width with margin
+          frameExportWidth = canvasSize.width * FRAME_MARGIN
+          frameExportHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
+          frameExportX = (canvasSize.width - frameExportWidth) / 2
           frameExportY = (canvasSize.height - frameExportHeight) / 2
         } else {
-          // Frame is taller - fit to canvas height
-          frameExportHeight = canvasSize.height
-          frameExportWidth = canvasSize.height * frameAspectRatio
+          // Frame is taller - fit to canvas height with margin
+          frameExportHeight = canvasSize.height * FRAME_MARGIN
+          frameExportWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
           frameExportX = (canvasSize.width - frameExportWidth) / 2
+          frameExportY = (canvasSize.height - frameExportHeight) / 2
         }
       }
 
