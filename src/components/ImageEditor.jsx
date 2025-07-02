@@ -813,21 +813,7 @@ const ImageEditor = () => {
                 </div>
               </div>
             )}
-            
-            {backgroundImage && (
-              <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">
-                Drag • Pinch • Scroll
-              </div>
-            )}
-            
-            {backgroundImage && (
-              <div className="absolute bottom-1 left-1 lg:bottom-2 lg:left-2 bg-black/70 text-white px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg text-[10px] lg:text-xs backdrop-blur-sm">
-                <div className="flex items-center gap-1">
-                  <span className="hidden sm:inline">📱 Drag • 🔍 Zoom</span>
-                  <span className="sm:hidden">Drag • Zoom</span>
-                </div>
-              </div>
-            )}
+          
           </div>
         </div>
       </div>
