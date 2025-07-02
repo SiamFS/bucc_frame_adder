@@ -347,8 +347,8 @@ const ImageEditor = () => {
     ctx.imageSmoothingQuality = 'high'
 
     // Calculate frame display dimensions (preserve aspect ratio)
-    // Apply 8% margin to prevent frame from touching preview boundaries
-    const FRAME_MARGIN = 0.92 // 8% reduction for comfortable margin
+    // Apply 12% margin to prevent frame from touching preview boundaries
+    const FRAME_MARGIN = 0.88 // 12% reduction for comfortable margin
     let frameDisplayWidth = canvasSize.width * FRAME_MARGIN
     let frameDisplayHeight = canvasSize.height * FRAME_MARGIN
     let frameX = 0
@@ -709,8 +709,8 @@ const ImageEditor = () => {
       setProcessingProgress(25)
 
       // Calculate frame dimensions for export (preserve aspect ratio)
-      // Apply same 8% margin as preview to ensure consistency
-      const FRAME_MARGIN = 0.92 // 8% reduction for comfortable margin
+      // Apply same 12% margin as preview to ensure consistency
+      const FRAME_MARGIN = 0.88 // 12% reduction for comfortable margin
       let frameExportWidth = canvasSize.width * FRAME_MARGIN
       let frameExportHeight = canvasSize.height * FRAME_MARGIN
       let frameExportX = 0
