@@ -191,10 +191,10 @@ const ImageEditor = () => {
       frameDisplayWidth = canvasSize.height * frameAspectRatio
     }
 
-    // Calculate optimal zoom to fit image within frame
+    // Calculate optimal zoom to ensure image fully covers the frame (no empty space)
     const scaleX = frameDisplayWidth / backgroundImage.width
     const scaleY = frameDisplayHeight / backgroundImage.height
-    const optimalZoom = Math.min(scaleX, scaleY) * 0.95 // 95% to ensure it fits
+    const optimalZoom = Math.max(scaleX, scaleY) * 1.05 // 105% to ensure it fully covers the frame
 
     setZoom(optimalZoom)
     setPosition({ x: 0, y: 0 }) // Center the image
@@ -315,14 +315,33 @@ const ImageEditor = () => {
       // Apply filters using CSS filters for better performance
       ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
       
-      // Calculate optimal scaling and positioning
-      const scale = zoom
-      const imgWidth = backgroundImage.width * scale
-      const imgHeight = backgroundImage.height * scale
+      // Calculate scaling to ensure the image fills the entire frame area
+      let scale = zoom;
+      const imgWidth = backgroundImage.width * scale;
+      const imgHeight = backgroundImage.height * scale;
+      
+      // Ensure image fills the frame completely
+      if (frameImage) {
+        const imgAspect = backgroundImage.width / backgroundImage.height;
+        const frameAspect = frameDisplayWidth / frameDisplayHeight;
+        
+        // Adjust scale to ensure the image always covers the entire frame area
+        if (imgAspect > frameAspect) {
+          const minScale = frameDisplayHeight / backgroundImage.height;
+          scale = Math.max(scale, minScale);
+        } else {
+          const minScale = frameDisplayWidth / backgroundImage.width;
+          scale = Math.max(scale, minScale);
+        }
+      }
+      
+      // Recalculate dimensions with potentially adjusted scale
+      const finalImgWidth = backgroundImage.width * scale;
+      const finalImgHeight = backgroundImage.height * scale;
       
       // Center and apply position offset
-      const x = (canvasSize.width - imgWidth) / 2 + position.x
-      const y = (canvasSize.height - imgHeight) / 2 + position.y
+      const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
+      const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
       
       // Draw background with clipping applied
       ctx.drawImage(backgroundImage, x, y, imgWidth, imgHeight)
@@ -728,7 +747,7 @@ const ImageEditor = () => {
   }, [showNotification])
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 lg:p-4 max-w-[1480px] mx-auto">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 lg:p-4 max-w-[1560px] mx-auto">
       {/* Notification System */}
       {notification && (
         <div className={`fixed top-4 right-4 z-50 max-w-sm p-4 rounded-xl shadow-2xl transition-all duration-300 transform animate-slide-up ${
@@ -747,10 +766,10 @@ const ImageEditor = () => {
 
       {/* Canvas Section - Preview (Center) */}
       <div className="lg:col-span-6 order-2">
-        <div className="glass-morphism rounded-2xl p-3 lg:p-4 animate-fade-in shadow-lg h-full flex flex-col justify-center">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
-            <div className="flex items-center gap-2 text-xs lg:text-sm text-slate-600 dark:text-dark-text-secondary">
+        <div className="glass-morphism rounded-2xl p-1 lg:p-2 animate-fade-in shadow-lg h-full flex flex-col">
+          <div className="flex items-center justify-between mb-1 py-1">
+            <h2 className="text-base lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-dark-text-secondary">
               <span className="status-indicator">
                 {canvasSize.width} × {canvasSize.height}
               </span>
@@ -758,16 +777,17 @@ const ImageEditor = () => {
           </div>
           
           <div 
-            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} flex justify-center items-center flex-grow`}
+            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} flex-1 flex-grow`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            style={{ minHeight: '450px', height: 'calc(100vh - 200px)' }}
           >
             <canvas
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className={`w-full h-auto min-h-[300px] max-h-[70vh] lg:max-h-[80vh] object-contain transition-all duration-200 bg-slate-100 dark:bg-dark-bg-tertiary border border-slate-200 dark:border-dark-border-primary rounded-lg ${
+              className={`w-full h-full min-h-[350px] max-h-[90vh] lg:max-h-[95vh] object-cover transition-all duration-200 bg-slate-100 dark:bg-dark-bg-tertiary border border-slate-200 dark:border-dark-border-primary rounded-lg ${
                 backgroundImage ? 'cursor-move' : ''
               } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleStart}
@@ -795,16 +815,16 @@ const ImageEditor = () => {
             )}
             
             {backgroundImage && (
-              <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded pointer-events-none">
-                Drag • Pinch • Scroll for full freedom
+              <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">
+                Drag • Pinch • Scroll
               </div>
             )}
             
             {backgroundImage && (
-              <div className="absolute bottom-2 left-2 lg:bottom-4 lg:left-4 bg-black/70 text-white px-3 py-2 lg:px-4 lg:py-2 rounded-lg text-xs lg:text-sm backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline">📱 Drag to move • 🔍 Scroll to zoom</span>
-                  <span className="sm:hidden">Drag • Pinch zoom</span>
+              <div className="absolute bottom-1 left-1 lg:bottom-2 lg:left-2 bg-black/70 text-white px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg text-[10px] lg:text-xs backdrop-blur-sm">
+                <div className="flex items-center gap-1">
+                  <span className="hidden sm:inline">📱 Drag • 🔍 Zoom</span>
+                  <span className="sm:hidden">Drag • Zoom</span>
                 </div>
               </div>
             )}
