@@ -815,13 +815,13 @@ const ImageEditor = () => {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            style={{ minHeight: '450px', height: 'calc(100vh - 200px)' }}
+            style={{ minHeight: '350px', height: 'calc(100vh - 280px)' }}
           >
             <canvas
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className={`w-full h-full min-h-[350px] max-h-[90vh] lg:max-h-[95vh] object-cover transition-all duration-200 bg-slate-100 dark:bg-dark-bg-tertiary border border-slate-200 dark:border-dark-border-primary rounded-lg ${
+              className={`w-full h-full min-h-[300px] max-h-[55vh] lg:max-h-[95vh] object-cover transition-all duration-200 bg-slate-100 dark:bg-dark-bg-tertiary border border-slate-200 dark:border-dark-border-primary rounded-lg ${
                 backgroundImage ? 'cursor-move' : ''
               } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleStart}
