@@ -61,7 +61,6 @@ const ImageEditor = () => {
   const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1080 })
   const [processingProgress, setProcessingProgress] = useState(0)
   const [notification, setNotification] = useState(null)
-  const [isAdvancedMode, setIsAdvancedMode] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [isMouseOverPreview, setIsMouseOverPreview] = useState(false)
   
@@ -974,32 +973,6 @@ const ImageEditor = () => {
           )}
         </div>
 
-        {/* Canvas Size Selection */}
-        {isAdvancedMode && (
-          <div className="control-panel animate-slide-up rounded-2xl p-4 lg:p-5 shadow-lg h-full">
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-3 flex items-center gap-2">
-              <CogIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              Output Resolution
-            </h3>
-            <div className="grid grid-cols-1 gap-2">
-              {Object.entries(CANVAS_CONFIGS).map(([key, config]) => (
-                <button
-                  key={key}
-                  onClick={() => setCanvasSize(config)}
-                  className={`p-3 rounded-lg text-left transition-all duration-200 ${
-                    canvasSize.width === config.width && canvasSize.height === config.height
-                      ? 'bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-500 text-blue-800 dark:text-blue-300'
-                      : 'bg-white dark:bg-dark-bg-secondary hover:bg-slate-50 dark:hover:bg-dark-bg-tertiary border-2 border-slate-200 dark:border-dark-border-primary'
-                  }`}
-                >
-                  <div className="font-medium dark:text-dark-text-primary">{config.label}</div>
-                  <div className="text-sm text-slate-500 dark:text-dark-text-secondary">{config.width} × {config.height}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Empty space where controls section used to be */}
       </div>
       
@@ -1012,15 +985,6 @@ const ImageEditor = () => {
                 <AdjustmentsHorizontalIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
                 Photo Controls
               </h2>
-              <button
-                onClick={() => setIsAdvancedMode(!isAdvancedMode)}
-                className={`p-2 rounded-lg transition-colors ${
-                  isAdvancedMode ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-slate-100 dark:bg-dark-bg-tertiary text-slate-600 dark:text-dark-text-secondary'
-                }`}
-                title="Toggle advanced mode"
-              >
-                <CogIcon className="w-5 h-5" />
-              </button>
             </div>
             
             {/* Frame Visibility Toggle */}
@@ -1127,16 +1091,6 @@ const ImageEditor = () => {
                   </>
                 )}
               </button>
-
-              {isAdvancedMode && (
-                <button
-                  onClick={() => handleDownload(0.8)}
-                  disabled={isProcessing}
-                  className="btn-secondary w-full text-sm"
-                >
-                  Quick Download (80% quality)
-                </button>
-              )}
             </div>
           </div>
         </div>
