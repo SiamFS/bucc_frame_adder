@@ -204,8 +204,8 @@
     }
     
     .canvas-container {
-      min-height: 250px !important;
-      max-height: 60vh !important;
+      min-height: 350px !important;
+      max-height: 65vh !important;
     }
     
     /* Improve touch targets */
@@ -235,8 +235,8 @@
     }
     
     .canvas-container {
-      min-height: 200px !important;
-      max-height: 50vh !important;
+      min-height: 300px !important;
+      max-height: 55vh !important;
     }
     
     .control-panel {
