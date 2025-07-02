@@ -18,11 +18,17 @@
     font-feature-settings: 'cv01', 'cv03', 'cv04', 'cv11';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color 0.3s ease, color 0.3s ease;
     /* Prevent horizontal scrolling */
     overflow-x: hidden;
     /* Better mobile scrolling */
     -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Only apply transition on non-mobile devices to prevent flickering */
+  @media (min-width: 1024px) {
+    body {
+      transition: background-color 0.1s ease, color 0.1s ease;
+    }
   }
   
   /* Prevent zoom on inputs on mobile */
@@ -55,7 +61,13 @@
     @apply backdrop-blur-lg bg-white/80 border border-white/30 shadow-2xl;
     @apply dark:bg-dark-bg-secondary/80 dark:border-dark-border-primary/30 dark:text-dark-text-primary;
     backdrop-filter: blur(20px);
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+  
+  /* Only apply transition on desktop to prevent mobile flickering */
+  @media (min-width: 1024px) {
+    .glass-morphism {
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
   }
   
   .glass-morphism-dark {
@@ -378,6 +390,21 @@
 .gpu-accelerated {
   transform: translateZ(0);
   will-change: transform;
+}
+
+/* Prevent flickering during responsive breakpoint changes */
+@media (max-width: 1023px) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-bounce-in {
+    animation: none !important;
+  }
+  
+  .glass-morphism,
+  .control-panel,
+  .upload-area {
+    transition: none !important;
+  }
 }
 
 /* Accessibility improvements */

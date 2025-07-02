@@ -17,22 +17,17 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo and Brand */}
           <div className="flex items-center gap-3 lg:gap-4">
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex items-center justify-center">
               <img 
                 src={BuccLogo} 
                 alt="BUCC Logo" 
                 className="w-10 h-10 lg:w-12 lg:h-12 transition-transform duration-300 hover:scale-110"
               />
             </div>
-            <div className="hidden sm:block">
+            <div className="flex items-center">
               <p className="text-lg text-slate-600 dark:text-slate-400">
                 Frame Editor
               </p>
-            </div>
-            <div className="sm:hidden">
-              <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                BUCC
-              </h1>
             </div>
           </div>
 
@@ -41,7 +36,7 @@ const Navbar = () => {
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-all duration-300 hover:scale-105"
+              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-all duration-300 hover:scale-105 flex items-center justify-center"
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? (
@@ -56,7 +51,7 @@ const Navbar = () => {
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-all duration-300"
+              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-all duration-300 flex items-center justify-center"
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? (
@@ -68,7 +63,7 @@ const Navbar = () => {
             
             <button
               onClick={toggleMenu}
-              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-all duration-300"
+              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-all duration-300 flex items-center justify-center"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? (

@@ -877,7 +877,7 @@ const ImageEditor = () => {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 p-3 lg:p-4 max-w-[1560px] mx-auto">
       {/* Notification System */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 max-w-[calc(100vw-2rem)] sm:max-w-sm p-3 lg:p-4 rounded-xl shadow-2xl transition-all duration-300 transform animate-slide-up ${
+        <div className={`fixed top-4 right-4 z-50 max-w-[calc(100vw-2rem)] sm:max-w-sm p-3 lg:p-4 rounded-xl shadow-2xl transition-all duration-200 ${
           notification.type === 'success' ? 'bg-green-500 text-white' :
           notification.type === 'error' ? 'bg-red-500 text-white' :
           'bg-blue-500 text-white'
@@ -893,7 +893,7 @@ const ImageEditor = () => {
 
       {/* Canvas Section - Preview (Center) */}
       <div className="lg:col-span-6 order-2">
-        <div className="glass-morphism rounded-xl lg:rounded-2xl p-1 lg:p-2 animate-fade-in shadow-lg h-full flex flex-col">
+        <div className="glass-morphism rounded-xl lg:rounded-2xl p-1 lg:p-2 shadow-lg h-full flex flex-col">
           <div className="flex items-center justify-between mb-1 py-1 px-1 lg:px-0">
             <h2 className="text-sm lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
             <div className="flex items-center gap-1 lg:gap-2 text-xs text-slate-600 dark:text-dark-text-secondary">
@@ -947,12 +947,11 @@ const ImageEditor = () => {
       {/* Left Control Panel - Upload Background */}
       <div className="lg:col-span-3 order-1 space-y-3 lg:space-y-4">
         {/* Upload Section */}
-        <div className="control-panel animate-bounce-in rounded-xl lg:rounded-2xl p-3 lg:p-5 shadow-lg h-full flex flex-col">
+        <div className="control-panel rounded-xl lg:rounded-2xl p-3 lg:p-5 shadow-lg h-full flex flex-col">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
             <h2 className="text-base lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
               <PhotoIcon className="w-4 h-4 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
-              <span className="hidden sm:inline">Upload Background</span>
-              <span className="sm:hidden">Upload</span>
+              <span>Upload Background</span>
             </h2>
             {backgroundImage && (
               <button
@@ -1054,12 +1053,11 @@ const ImageEditor = () => {
       {/* Right Control Panel - Photo Controls */}
       {backgroundImage && (
         <div className="lg:col-span-3 order-3 space-y-2 lg:space-y-3">
-          <div className="control-panel animate-slide-up rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-lg h-full flex flex-col">
+          <div className="control-panel rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-lg h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
                 <AdjustmentsHorizontalIcon className="w-4 h-4 lg:w-6 lg:h-6 text-green-600 dark:text-green-400" />
-                <span className="hidden sm:inline">Photo Controls</span>
-                <span className="sm:hidden">Controls</span>
+                <span>Photo Controls</span>
               </h2>
             </div>
             
@@ -1147,8 +1145,7 @@ const ImageEditor = () => {
                 className="btn-secondary w-full flex items-center justify-center gap-2 py-2 lg:py-3 text-sm lg:text-base"
               >
                 <ArrowUturnLeftIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Reset & Auto-fit</span>
-                <span className="sm:hidden">Reset</span>
+                <span>Reset & Auto-fit</span>
               </button>
               
               {/* Image Resolution Button - Only show when both images are loaded */}
@@ -1162,8 +1159,7 @@ const ImageEditor = () => {
                   }`}
                 >
                   <AdjustmentsHorizontalIcon className="w-4 h-4" />
-                  <span className="hidden sm:inline">Image Resolution</span>
-                  <span className="sm:hidden">Resolution</span>
+                  <span>Image Resolution</span>
                 </button>
               )}
               
@@ -1175,16 +1171,14 @@ const ImageEditor = () => {
                 {isProcessing ? (
                   <>
                     <div className="loading-spinner"></div>
-                    <span className="hidden sm:inline">Processing...</span>
-                    <span className="sm:hidden">Processing</span>
+                    <span>Processing...</span>
                   </>
                 ) : (
-                  <>
-                    <ArrowDownTrayIcon className="w-4 h-4 lg:w-5 lg:h-5" />
-                    <span className="hidden sm:inline">Download HD Image</span>
-                    <span className="sm:hidden">Download</span>
-                  </>
-                )}
+                    <>
+                      <ArrowDownTrayIcon className="w-4 h-4 lg:w-5 lg:h-5" />
+                      <span>Download HD Image</span>
+                    </>
+                  )}
               </button>
             </div>
           </div>
@@ -1194,7 +1188,7 @@ const ImageEditor = () => {
       {/* Resolution Selector - Horizontal below editor */}
       {showResolutionSelector && backgroundImage && frameImage && (
         <div className="lg:col-span-12 order-4 mt-3 lg:mt-4">
-          <div className="glass-morphism rounded-xl lg:rounded-2xl p-3 lg:p-4 animate-fade-in shadow-lg">
+          <div className="glass-morphism rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-lg">
             <div className="flex items-center justify-between mb-3 lg:mb-4">
               <h3 className="text-base lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">
                 Choose Export Resolution
