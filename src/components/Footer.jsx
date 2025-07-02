@@ -3,6 +3,7 @@ import {
   BuildingOfficeIcon,
   AcademicCapIcon
 } from '@heroicons/react/24/outline'
+import BuccLogoIcon from '../assets/BUCC_Logo_icon.svg'
 
 const Footer = () => {
   return (
@@ -15,7 +16,7 @@ const Footer = () => {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
                 <img 
-                  src="/src/assets/BUCC_Logo_icon.svg" 
+                  src={BuccLogoIcon} 
                   alt="BUCC Logo" 
                   className="w-10 h-10 filter brightness-0 invert"
                 />
