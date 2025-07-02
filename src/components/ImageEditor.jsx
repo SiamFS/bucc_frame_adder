@@ -874,18 +874,18 @@ const ImageEditor = () => {
   }, [backgroundImage, handleWheel])
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 lg:p-4 max-w-[1560px] mx-auto">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 p-3 lg:p-4 max-w-[1560px] mx-auto">
       {/* Notification System */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 max-w-sm p-4 rounded-xl shadow-2xl transition-all duration-300 transform animate-slide-up ${
+        <div className={`fixed top-4 right-4 z-50 max-w-[calc(100vw-2rem)] sm:max-w-sm p-3 lg:p-4 rounded-xl shadow-2xl transition-all duration-300 transform animate-slide-up ${
           notification.type === 'success' ? 'bg-green-500 text-white' :
           notification.type === 'error' ? 'bg-red-500 text-white' :
           'bg-blue-500 text-white'
         }`}>
-          <div className="flex items-center gap-3">
-            {notification.type === 'success' && <CheckCircleIcon className="w-6 h-6" />}
-            {notification.type === 'error' && <ExclamationTriangleIcon className="w-6 h-6" />}
-            {notification.type === 'info' && <InformationCircleIcon className="w-6 h-6" />}
+          <div className="flex items-center gap-2 lg:gap-3">
+            {notification.type === 'success' && <CheckCircleIcon className="w-5 h-5 lg:w-6 lg:h-6" />}
+            {notification.type === 'error' && <ExclamationTriangleIcon className="w-5 h-5 lg:w-6 lg:h-6" />}
+            {notification.type === 'info' && <InformationCircleIcon className="w-5 h-5 lg:w-6 lg:h-6" />}
             <p className="font-medium text-sm lg:text-base">{notification.message}</p>
           </div>
         </div>
@@ -893,11 +893,11 @@ const ImageEditor = () => {
 
       {/* Canvas Section - Preview (Center) */}
       <div className="lg:col-span-6 order-2">
-        <div className="glass-morphism rounded-2xl p-1 lg:p-2 animate-fade-in shadow-lg h-full flex flex-col">
-          <div className="flex items-center justify-between mb-1 py-1">
-            <h2 className="text-base lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
-            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-dark-text-secondary">
-              <span className="status-indicator">
+        <div className="glass-morphism rounded-xl lg:rounded-2xl p-1 lg:p-2 animate-fade-in shadow-lg h-full flex flex-col">
+          <div className="flex items-center justify-between mb-1 py-1 px-1 lg:px-0">
+            <h2 className="text-sm lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
+            <div className="flex items-center gap-1 lg:gap-2 text-xs text-slate-600 dark:text-dark-text-secondary">
+              <span className="status-indicator text-xs">
                 {canvasSize.width} × {canvasSize.height}
               </span>
             </div>
@@ -947,16 +947,17 @@ const ImageEditor = () => {
       {/* Left Control Panel - Upload Background */}
       <div className="lg:col-span-3 order-1 space-y-3 lg:space-y-4">
         {/* Upload Section */}
-        <div className="control-panel animate-bounce-in rounded-2xl p-4 lg:p-5 shadow-lg h-full flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
-              <PhotoIcon className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
-              Upload Background
+        <div className="control-panel animate-bounce-in rounded-xl lg:rounded-2xl p-3 lg:p-5 shadow-lg h-full flex flex-col">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <h2 className="text-base lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
+              <PhotoIcon className="w-4 h-4 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
+              <span className="hidden sm:inline">Upload Background</span>
+              <span className="sm:hidden">Upload</span>
             </h2>
             {backgroundImage && (
               <button
                 onClick={clearImages}
-                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 lg:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                 title="Clear background image"
               >
                 <TrashIcon className="w-4 h-4 lg:w-5 lg:h-5" />
@@ -966,7 +967,7 @@ const ImageEditor = () => {
           
           {/* Background Image Upload with Drag & Drop */}
           <div 
-            className={`upload-area ${backgroundImage ? 'has-image' : ''} ${isDragOver ? 'drag-over' : ''} p-6 lg:p-8 relative`}
+            className={`upload-area ${backgroundImage ? 'has-image' : ''} ${isDragOver ? 'drag-over' : ''} p-4 lg:p-8 relative`}
             onClick={() => backgroundInputRef.current?.click()}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -983,24 +984,24 @@ const ImageEditor = () => {
             <div className="text-center">
               {isDragOver ? (
                 <>
-                  <CloudArrowUpIcon className="w-12 h-12 lg:w-16 lg:h-16 mx-auto text-green-500 mb-4 animate-bounce" />
-                  <p className="font-semibold text-green-700 text-lg lg:text-xl mb-2">
+                  <CloudArrowUpIcon className="w-8 h-8 lg:w-16 lg:h-16 mx-auto text-green-500 mb-2 lg:mb-4 animate-bounce" />
+                  <p className="font-semibold text-green-700 text-sm lg:text-xl mb-1 lg:mb-2">
                     Drop your image here!
                   </p>
                 </>
               ) : (
                 <>
-                  <PhotoIcon className="w-12 h-12 lg:w-16 lg:h-16 mx-auto text-blue-500 dark:text-blue-400 mb-4" />
-                  <p className="font-semibold text-slate-700 dark:text-dark-text-primary text-lg lg:text-xl mb-2">
+                  <PhotoIcon className="w-8 h-8 lg:w-16 lg:h-16 mx-auto text-blue-500 dark:text-blue-400 mb-2 lg:mb-4" />
+                  <p className="font-semibold text-slate-700 dark:text-dark-text-primary text-sm lg:text-xl mb-1 lg:mb-2">
                     {backgroundImage ? 'Background Image Loaded ✓' : 'Upload Background Photo'}
                   </p>
-                  <p className="text-sm lg:text-base text-slate-500 dark:text-dark-text-secondary mb-4">
+                  <p className="text-xs lg:text-base text-slate-500 dark:text-dark-text-secondary mb-2 lg:mb-4">
                     {backgroundImage ? 'Click to change or drag & drop a new image' : 'Click to browse or drag & drop your image here'}
                   </p>
-                  <div className="flex items-center justify-center gap-2 text-xs lg:text-sm text-slate-400 dark:text-dark-text-tertiary">
+                  <div className="flex items-center justify-center gap-1 lg:gap-2 text-xs text-slate-400 dark:text-dark-text-tertiary">
                     <span>Supports: JPG, PNG, WebP</span>
-                    <span>•</span>
-                    <span>Max: 50MB</span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="hidden sm:inline">Max: 50MB</span>
                   </div>
                 </>
               )}
@@ -1053,21 +1054,22 @@ const ImageEditor = () => {
       {/* Right Control Panel - Photo Controls */}
       {backgroundImage && (
         <div className="lg:col-span-3 order-3 space-y-2 lg:space-y-3">
-          <div className="control-panel animate-slide-up rounded-2xl p-3 lg:p-4 shadow-lg h-full flex flex-col">
+          <div className="control-panel animate-slide-up rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-lg h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
-                <AdjustmentsHorizontalIcon className="w-5 h-5 lg:w-6 lg:h-6 text-green-600 dark:text-green-400" />
-                Photo Controls
+              <h2 className="text-base lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
+                <AdjustmentsHorizontalIcon className="w-4 h-4 lg:w-6 lg:h-6 text-green-600 dark:text-green-400" />
+                <span className="hidden sm:inline">Photo Controls</span>
+                <span className="sm:hidden">Controls</span>
               </h2>
             </div>
             
             {/* Frame Visibility Toggle */}
             {frameImage && (
               <div className="flex items-center justify-between p-2 lg:p-3 bg-slate-50 dark:bg-dark-bg-tertiary rounded-lg mb-3">
-                <span className="font-medium text-sm lg:text-base text-slate-700 dark:text-dark-text-primary">Show Frame</span>
+                <span className="font-medium text-xs lg:text-base text-slate-700 dark:text-dark-text-primary">Show Frame</span>
                 <button
                   onClick={() => setShowFrame(!showFrame)}
-                  className={`p-2 rounded-md transition-colors ${
+                  className={`p-2 lg:p-2 rounded-md transition-colors flex items-center justify-center ${
                     showFrame ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' : 'bg-slate-100 dark:bg-dark-border-primary text-slate-500 dark:text-dark-text-secondary'
                   }`}
                   title={showFrame ? "Hide frame" : "Show frame"}
@@ -1082,8 +1084,8 @@ const ImageEditor = () => {
             )}
             
             {/* Zoom Control */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
+            <div className="space-y-1 lg:space-y-2">
+              <label className="flex items-center gap-1 lg:gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
                 <MagnifyingGlassIcon className="w-3 h-3 lg:w-4 lg:h-4" />
                 Zoom: {zoom.toFixed(1)}x
               </label>
@@ -1097,7 +1099,7 @@ const ImageEditor = () => {
                   const newZoom = parseFloat(e.target.value)
                   setZoom(newZoom)
                 }}
-                className="w-full slider"
+                className="w-full slider h-2 lg:h-3"
               />
               <div className="flex justify-between text-xs text-slate-500 dark:text-dark-text-tertiary">
                 <span>0.1x</span>
@@ -1107,8 +1109,8 @@ const ImageEditor = () => {
             </div>
 
             {/* Brightness Control */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
+            <div className="space-y-1 lg:space-y-2">
+              <label className="flex items-center gap-1 lg:gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
                 <SunIcon className="w-3 h-3 lg:w-4 lg:h-4" />
                 Brightness: {brightness}%
               </label>
@@ -1118,13 +1120,13 @@ const ImageEditor = () => {
                 max="150"
                 value={brightness}
                 onChange={(e) => setBrightness(parseInt(e.target.value))}
-                className="w-full slider"
+                className="w-full slider h-2 lg:h-3"
               />
             </div>
 
             {/* Contrast Control */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
+            <div className="space-y-1 lg:space-y-2">
+              <label className="flex items-center gap-1 lg:gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
                 <SparklesIcon className="w-3 h-3 lg:w-4 lg:h-4" />
                 Contrast: {contrast}%
               </label>
@@ -1134,7 +1136,7 @@ const ImageEditor = () => {
                 max="150"
                 value={contrast}
                 onChange={(e) => setContrast(parseInt(e.target.value))}
-                className="w-full slider"
+                className="w-full slider h-2 lg:h-3"
               />
             </div>
 
@@ -1142,41 +1144,45 @@ const ImageEditor = () => {
             <div className="flex flex-col gap-2 pt-3">
               <button
                 onClick={handleReset}
-                className="btn-secondary w-full flex items-center justify-center gap-2"
+                className="btn-secondary w-full flex items-center justify-center gap-2 py-2 lg:py-3 text-sm lg:text-base"
               >
                 <ArrowUturnLeftIcon className="w-4 h-4" />
-                Reset & Auto-fit
+                <span className="hidden sm:inline">Reset & Auto-fit</span>
+                <span className="sm:hidden">Reset</span>
               </button>
               
               {/* Image Resolution Button - Only show when both images are loaded */}
               {backgroundImage && frameImage && (
                 <button
                   onClick={() => setShowResolutionSelector(!showResolutionSelector)}
-                  className={`w-full flex items-center justify-center gap-2 ${
+                  className={`w-full flex items-center justify-center gap-2 py-2 lg:py-3 text-sm lg:text-base transition-all duration-200 ${
                     showResolutionSelector 
                       ? 'btn-primary shadow-blue-500/50 shadow-lg ring-2 ring-blue-300 dark:ring-blue-500' 
                       : 'btn-secondary'
                   }`}
                 >
                   <AdjustmentsHorizontalIcon className="w-4 h-4" />
-                  Image Resolution
+                  <span className="hidden sm:inline">Image Resolution</span>
+                  <span className="sm:hidden">Resolution</span>
                 </button>
               )}
               
               <button
                 onClick={() => handleDownload(1.0)}
                 disabled={isProcessing}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                className="btn-primary w-full flex items-center justify-center gap-2 py-2 lg:py-3 text-sm lg:text-base"
               >
                 {isProcessing ? (
                   <>
                     <div className="loading-spinner"></div>
-                    Processing...
+                    <span className="hidden sm:inline">Processing...</span>
+                    <span className="sm:hidden">Processing</span>
                   </>
                 ) : (
                   <>
-                    <ArrowDownTrayIcon className="w-5 h-5" />
-                    Download HD Image
+                    <ArrowDownTrayIcon className="w-4 h-4 lg:w-5 lg:h-5" />
+                    <span className="hidden sm:inline">Download HD Image</span>
+                    <span className="sm:hidden">Download</span>
                   </>
                 )}
               </button>
@@ -1187,33 +1193,34 @@ const ImageEditor = () => {
 
       {/* Resolution Selector - Horizontal below editor */}
       {showResolutionSelector && backgroundImage && frameImage && (
-        <div className="lg:col-span-12 order-3 mt-4">
-          <div className="glass-morphism rounded-2xl p-4 animate-fade-in shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-dark-text-primary">
+        <div className="lg:col-span-12 order-4 mt-3 lg:mt-4">
+          <div className="glass-morphism rounded-xl lg:rounded-2xl p-3 lg:p-4 animate-fade-in shadow-lg">
+            <div className="flex items-center justify-between mb-3 lg:mb-4">
+              <h3 className="text-base lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">
                 Choose Export Resolution
               </h3>
               <button
                 onClick={() => setShowResolutionSelector(false)}
-                className="text-slate-500 hover:text-slate-700 dark:text-dark-text-secondary dark:hover:text-dark-text-primary"
+                className="text-slate-500 hover:text-slate-700 dark:text-dark-text-secondary dark:hover:text-dark-text-primary p-1 rounded-md hover:bg-slate-100 dark:hover:bg-dark-bg-tertiary transition-colors"
+                aria-label="Close resolution selector"
               >
                 ✕
               </button>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 lg:gap-3">
               {getValidResolutions().map((resolution) => (
                 <button
                   key={resolution.key}
                   onClick={() => handleResolutionSelect(resolution)}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
+                  className={`p-3 lg:p-4 rounded-lg lg:rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
                     canvasSize.width === resolution.width && canvasSize.height === resolution.height
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                       : 'border-slate-200 dark:border-dark-border-primary hover:border-blue-300 bg-white dark:bg-dark-bg-secondary'
                   }`}
                 >
                   <div className="text-center">
-                    <div className="font-semibold text-sm mb-1">
+                    <div className="font-semibold text-xs lg:text-sm mb-1">
                       {resolution.width} × {resolution.height}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-dark-text-secondary">
@@ -1234,8 +1241,8 @@ const ImageEditor = () => {
               ))}
             </div>
             
-            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-              <p className="text-sm text-blue-700 dark:text-blue-300">
+            <div className="mt-3 lg:mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+              <p className="text-xs lg:text-sm text-blue-700 dark:text-blue-300">
                 <strong>Quality Priority:</strong> Export resolutions are based on your background image quality. 
                 Frame will be upscaled when needed to maintain your image's resolution (marked as "Frame Upscaled").
               </p>

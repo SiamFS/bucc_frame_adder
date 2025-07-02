@@ -7,6 +7,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Prevent horizontal scrolling */
+    overflow-x: hidden;
   }
   
   body {
@@ -17,6 +19,19 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease, color 0.3s ease;
+    /* Prevent horizontal scrolling */
+    overflow-x: hidden;
+    /* Better mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent zoom on inputs on mobile */
+  @media screen and (max-width: 768px) {
+    input[type="range"],
+    input[type="file"],
+    button {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
   }
 
   /* Custom scrollbar */
@@ -159,11 +174,65 @@
     }
     
     .upload-area {
-      @apply p-6;
+      @apply p-4;
+      min-height: 120px;
     }
     
     .control-panel {
-      @apply p-4 space-y-4;
+      @apply p-3 space-y-3;
+    }
+    
+    .slider {
+      @apply h-2;
+    }
+    
+    .btn-primary, .btn-secondary {
+      @apply text-sm py-2 px-4;
+      min-height: 44px; /* Better touch targets */
+    }
+    
+    .canvas-container {
+      min-height: 250px !important;
+      max-height: 60vh !important;
+    }
+    
+    /* Improve touch targets */
+    button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better spacing for mobile */
+    .grid {
+      @apply gap-3;
+    }
+    
+    /* Notification positioning for mobile */
+    .fixed.top-4.right-4 {
+      @apply top-2 right-2 left-2;
+      width: auto;
+      max-width: none;
+    }
+  }
+  
+  /* Extra small screens */
+  @media (max-width: 480px) {
+    .upload-area {
+      @apply p-3;
+      min-height: 100px;
+    }
+    
+    .canvas-container {
+      min-height: 200px !important;
+      max-height: 50vh !important;
+    }
+    
+    .control-panel {
+      @apply p-2 space-y-2;
+    }
+    
+    .glass-morphism {
+      @apply rounded-lg;
     }
   }
 }
