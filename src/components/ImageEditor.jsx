@@ -63,6 +63,7 @@ const ImageEditor = () => {
   const [notification, setNotification] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [isMouseOverPreview, setIsMouseOverPreview] = useState(false)
+  const [showResolutionSelector, setShowResolutionSelector] = useState(false)
   
   // Enhanced gesture state for pinch-to-zoom and smooth panning
   const [isPinching, setIsPinching] = useState(false)
@@ -199,6 +200,79 @@ const ImageEditor = () => {
     setZoom(optimalZoom)
     setPosition({ x: 0, y: 0 }) // Center the image
   }, [backgroundImage, frameImage, canvasSize])
+
+  // Calculate valid resolution options - prioritize user image quality (Option 2)
+  const getValidResolutions = useCallback(() => {
+    if (!backgroundImage || !frameImage) return []
+
+    // Get actual image dimensions
+    const bgWidth = backgroundImage.width
+    const bgHeight = backgroundImage.height
+    const frameWidth = frameImage.width
+    const frameHeight = frameImage.height
+
+    // Standard resolutions to check against
+    const standardResolutions = [
+      { width: 1920, height: 1080, label: 'Full HD (1920×1080)', key: 'FHD' },
+      { width: 2560, height: 1440, label: '2K QHD (2560×1440)', key: '2K' },
+      { width: 3840, height: 2160, label: '4K UHD (3840×2160)', key: '4K' },
+      { width: 1080, height: 1080, label: 'Square (1080×1080)', key: 'SQ' },
+      { width: 1080, height: 1350, label: 'Portrait (1080×1350)', key: 'PT' }
+    ]
+
+    // Prioritize user image quality - allow export up to the user's image resolution
+    // The frame may be upscaled if user uploads a higher-res image
+    const maxWidth = bgWidth  // Use background image width as limit
+    const maxHeight = bgHeight // Use background image height as limit
+
+    const validResolutions = standardResolutions.filter(res => 
+      res.width <= maxWidth && res.height <= maxHeight
+    ).map(res => {
+      // Add upscaling indicator if frame needs to be upscaled
+      const frameNeedsUpscaling = res.width > frameWidth || res.height > frameHeight
+      return {
+        ...res,
+        frameUpscaled: frameNeedsUpscaling,
+        label: res.label,
+        upscaleNote: frameNeedsUpscaling ? 'Frame Upscaled' : null
+      }
+    })
+
+    // Always include the current canvas size if it's valid
+    const currentRes = { 
+      width: canvasSize.width, 
+      height: canvasSize.height, 
+      label: `Current (${canvasSize.width}×${canvasSize.height})`,
+      key: 'CURRENT',
+      frameUpscaled: canvasSize.width > frameWidth || canvasSize.height > frameHeight,
+      upscaleNote: (canvasSize.width > frameWidth || canvasSize.height > frameHeight) ? 'Frame Upscaled' : null
+    }
+    
+    if (canvasSize.width <= maxWidth && canvasSize.height <= maxHeight) {
+      // Add current if it's not already in the list
+      const exists = validResolutions.some(res => 
+        res.width === canvasSize.width && res.height === canvasSize.height
+      )
+      if (!exists) {
+        validResolutions.push(currentRes)
+      }
+    }
+
+    // Sort by total pixels (descending)
+    return validResolutions.sort((a, b) => (b.width * b.height) - (a.width * a.height))
+  }, [backgroundImage, frameImage, canvasSize])
+
+  // Handle resolution selection
+  const handleResolutionSelect = useCallback((resolution) => {
+    setCanvasSize({ width: resolution.width, height: resolution.height })
+    // Don't close the selector - let user choose multiple resolutions
+    showNotification(`Resolution changed to ${resolution.label}`, 'success')
+    
+    // Auto-fit the image to the new canvas size
+    setTimeout(() => {
+      autoFitToFrame()
+    }, 100)
+  }, [showNotification, autoFitToFrame])
 
   const handleBackgroundUpload = useCallback(async (event) => {
     const file = event.target.files?.[0]
@@ -748,11 +822,8 @@ const ImageEditor = () => {
       setTimeout(() => {
         autoFitToFrame()
       }, 100)
-      showNotification('Controls reset and image auto-fitted to frame', 'info')
-    } else {
-      showNotification('Controls reset to default values', 'info')
     }
-  }, [showNotification, backgroundImage, frameImage, autoFitToFrame])
+  }, [backgroundImage, frameImage, autoFitToFrame])
 
   // Clear images
   const clearImages = useCallback(() => {
@@ -876,7 +947,7 @@ const ImageEditor = () => {
       {/* Left Control Panel - Upload Background */}
       <div className="lg:col-span-3 order-1 space-y-3 lg:space-y-4">
         {/* Upload Section */}
-        <div className="control-panel animate-bounce-in rounded-2xl p-4 lg:p-5 shadow-lg h-full">
+        <div className="control-panel animate-bounce-in rounded-2xl p-4 lg:p-5 shadow-lg h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
               <PhotoIcon className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
@@ -971,6 +1042,9 @@ const ImageEditor = () => {
               </div>
             </div>
           )}
+          
+          {/* Spacer to push content to match photo controls height */}
+          <div className="flex-grow"></div>
         </div>
 
         {/* Empty space where controls section used to be */}
@@ -978,19 +1052,19 @@ const ImageEditor = () => {
       
       {/* Right Control Panel - Photo Controls */}
       {backgroundImage && (
-        <div className="lg:col-span-3 order-3 space-y-3 lg:space-y-4">
-          <div className="control-panel animate-slide-up rounded-2xl p-4 lg:p-5 shadow-lg h-full">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
-                <AdjustmentsHorizontalIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+        <div className="lg:col-span-3 order-3 space-y-2 lg:space-y-3">
+          <div className="control-panel animate-slide-up rounded-2xl p-3 lg:p-4 shadow-lg h-full flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
+                <AdjustmentsHorizontalIcon className="w-5 h-5 lg:w-6 lg:h-6 text-green-600 dark:text-green-400" />
                 Photo Controls
               </h2>
             </div>
             
             {/* Frame Visibility Toggle */}
             {frameImage && (
-              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-dark-bg-tertiary rounded-lg mb-4">
-                <span className="font-medium text-slate-700 dark:text-dark-text-primary">Show Frame</span>
+              <div className="flex items-center justify-between p-2 lg:p-3 bg-slate-50 dark:bg-dark-bg-tertiary rounded-lg mb-3">
+                <span className="font-medium text-sm lg:text-base text-slate-700 dark:text-dark-text-primary">Show Frame</span>
                 <button
                   onClick={() => setShowFrame(!showFrame)}
                   className={`p-2 rounded-md transition-colors ${
@@ -999,18 +1073,18 @@ const ImageEditor = () => {
                   title={showFrame ? "Hide frame" : "Show frame"}
                 >
                   {showFrame ? (
-                    <EyeIcon className="w-5 h-5" />
+                    <EyeIcon className="w-4 h-4 lg:w-5 lg:h-5" />
                   ) : (
-                    <EyeSlashIcon className="w-5 h-5" />
+                    <EyeSlashIcon className="w-4 h-4 lg:w-5 lg:h-5" />
                   )}
                 </button>
               </div>
             )}
             
             {/* Zoom Control */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
-                <MagnifyingGlassIcon className="w-4 h-4" />
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
+                <MagnifyingGlassIcon className="w-3 h-3 lg:w-4 lg:h-4" />
                 Zoom: {zoom.toFixed(1)}x
               </label>
               <input
@@ -1033,9 +1107,9 @@ const ImageEditor = () => {
             </div>
 
             {/* Brightness Control */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
-                <SunIcon className="w-4 h-4" />
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
+                <SunIcon className="w-3 h-3 lg:w-4 lg:h-4" />
                 Brightness: {brightness}%
               </label>
               <input
@@ -1049,9 +1123,9 @@ const ImageEditor = () => {
             </div>
 
             {/* Contrast Control */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
-                <SparklesIcon className="w-4 h-4" />
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
+                <SparklesIcon className="w-3 h-3 lg:w-4 lg:h-4" />
                 Contrast: {contrast}%
               </label>
               <input
@@ -1065,14 +1139,29 @@ const ImageEditor = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-3 pt-4">
+            <div className="flex flex-col gap-2 pt-3">
               <button
                 onClick={handleReset}
                 className="btn-secondary w-full flex items-center justify-center gap-2"
               >
-                <ArrowUturnLeftIcon className="w-5 h-5" />
-                {backgroundImage && frameImage ? 'Reset & Auto-fit' : 'Reset Controls'}
+                <ArrowUturnLeftIcon className="w-4 h-4" />
+                Reset & Auto-fit
               </button>
+              
+              {/* Image Resolution Button - Only show when both images are loaded */}
+              {backgroundImage && frameImage && (
+                <button
+                  onClick={() => setShowResolutionSelector(!showResolutionSelector)}
+                  className={`w-full flex items-center justify-center gap-2 ${
+                    showResolutionSelector 
+                      ? 'btn-primary shadow-blue-500/50 shadow-lg ring-2 ring-blue-300 dark:ring-blue-500' 
+                      : 'btn-secondary'
+                  }`}
+                >
+                  <AdjustmentsHorizontalIcon className="w-4 h-4" />
+                  Image Resolution
+                </button>
+              )}
               
               <button
                 onClick={() => handleDownload(1.0)}
@@ -1091,6 +1180,65 @@ const ImageEditor = () => {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resolution Selector - Horizontal below editor */}
+      {showResolutionSelector && backgroundImage && frameImage && (
+        <div className="lg:col-span-12 order-3 mt-4">
+          <div className="glass-morphism rounded-2xl p-4 animate-fade-in shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-dark-text-primary">
+                Choose Export Resolution
+              </h3>
+              <button
+                onClick={() => setShowResolutionSelector(false)}
+                className="text-slate-500 hover:text-slate-700 dark:text-dark-text-secondary dark:hover:text-dark-text-primary"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+              {getValidResolutions().map((resolution) => (
+                <button
+                  key={resolution.key}
+                  onClick={() => handleResolutionSelect(resolution)}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
+                    canvasSize.width === resolution.width && canvasSize.height === resolution.height
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'border-slate-200 dark:border-dark-border-primary hover:border-blue-300 bg-white dark:bg-dark-bg-secondary'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="font-semibold text-sm mb-1">
+                      {resolution.width} × {resolution.height}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-dark-text-secondary">
+                      {resolution.label.split('(')[0].trim()}
+                    </div>
+                    {resolution.upscaleNote && (
+                      <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
+                        {resolution.upscaleNote}
+                      </div>
+                    )}
+                    {canvasSize.width === resolution.width && canvasSize.height === resolution.height && (
+                      <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
+                        Current
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>Quality Priority:</strong> Export resolutions are based on your background image quality. 
+                Frame will be upscaled when needed to maintain your image's resolution (marked as "Frame Upscaled").
+              </p>
             </div>
           </div>
         </div>

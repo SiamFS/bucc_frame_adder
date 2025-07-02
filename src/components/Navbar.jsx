@@ -83,14 +83,7 @@ const Navbar = () => {
         {/* Mobile Navigation Menu */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-slate-200 dark:border-slate-700 py-4 animate-slide-down">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                <SparklesIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                  Professional Photo Editor
-                </span>
-              </div>
-              
+            <div className="flex flex-col items-start gap-4 px-4">              
               <div className="text-sm text-slate-600 dark:text-slate-400">
                 <p>• Upload background photo and transparent frame</p>
                 <p>• Adjust brightness, contrast, and zoom</p>
