@@ -952,7 +952,7 @@ const ImageEditor = () => {
               </div>
               <div>
                 <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">BUCC Frame Included</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400">Professional BRAC University Computer Club frame applied automatically</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400">BRAC University Computer Club frame applied automatically</p>
               </div>
             </div>
           </div>
