@@ -3,7 +3,6 @@ import {
   BuildingOfficeIcon,
   AcademicCapIcon
 } from '@heroicons/react/24/outline'
-import BuccLogoIcon from '../assets/BUCC_Logo.svg'
 
 const Footer = () => {
   return (
@@ -14,13 +13,6 @@ const Footer = () => {
           {/* Header Section */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 mb-8">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
-                <img 
-                  src={BuccLogoIcon} 
-                  alt="BUCC Logo" 
-                  className="w-10 h-10 filter brightness-0 invert"
-                />
-              </div>
               <div>
                 <h3 className="text-2xl font-bold text-slate-800 dark:text-dark-text-primary mb-1">
                   BRAC University Computer Club 

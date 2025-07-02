@@ -4,6 +4,7 @@ import ImageEditor from './components/ImageEditor'
 import Navbar from './components/Navbar'
 import { organizationConfig, appConfig } from './config/theme'
 
+
 function App() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [copiedHashtag, setCopiedHashtag] = useState('')
@@ -129,7 +130,7 @@ function App() {
                   </div>
                   <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Edit & Adjust</h3>
                   <p className="text-slate-600 dark:text-dark-text-secondary text-sm">
-                    Use professional controls to adjust brightness, contrast, zoom, 
+                    Use Controls to adjust brightness, contrast, zoom, 
                     and position. Real-time preview shows changes instantly.
                   </p>
                 </div>
@@ -176,31 +177,19 @@ function App() {
                     {/* Footer */}
                     <footer className="text-center mt-20 pb-8 animate-fade-in" style={{ animationDelay: '1s' }}>
                       <div className="glass-morphism rounded-2xl p-8 max-w-4xl mx-auto bg-white/10 dark:bg-dark-bg-secondary/20 backdrop-blur-md border border-white/20 dark:border-dark-border-primary">
-                        {/* BUCC Logo and Info */}
-                        <div className="flex flex-col items-center mb-6">
-                          <div className="flex items-center gap-4 mb-4">
-                            <img 
-                              src="/src/assets/BUCC_Logo.svg" 
-                              alt="BRAC University Computer Club" 
-                              className="h-12 w-auto"
-                            />
-                            <div className="text-left">
-                              <h3 className="text-lg font-bold text-slate-800 dark:text-dark-text-primary">
-                                {organizationConfig.name}
-                              </h3>
-                              <p className="text-sm text-slate-600 dark:text-dark-text-secondary">
-                                {organizationConfig.description}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <p className="text-sm text-slate-600 dark:text-dark-text-secondary mb-4 max-w-2xl">
+                        
+                        {/* Club Header */}
+                        <div className="text-center mb-6">
+                          <h3 className="text-xl font-bold text-slate-800 dark:text-dark-text-primary mb-2">
+                            {organizationConfig.name}
+                          </h3>
+                          <p className="text-sm text-slate-600 dark:text-dark-text-secondary mb-4 max-w-2xl mx-auto">
                             <strong className="text-primary-600 dark:text-primary-400">Mission:</strong> {organizationConfig.mission}
                           </p>
                         </div>
           
                         {/* Club Activities */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-6 text-xs">
+                        <div className="flex flex-wrap justify-center gap-2 mb-6 text-xs">
                           {organizationConfig.activities.map((activity) => (
                             <span 
                               key={activity}
@@ -239,9 +228,13 @@ function App() {
                           </a>
                         </div>
           
-                        <div className="border-t border-slate-200 dark:border-dark-border-primary pt-4">
-                          <p className="text-sm text-slate-500 dark:text-dark-text-tertiary mb-4">
-                            © 2025 {organizationConfig.name} - Empowering creativity through technology
+                        {/* Motto and Copyright */}
+                        <div className="border-t border-slate-200 dark:border-dark-border-primary pt-4 text-center">
+                          <p className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">
+                            Upgrade yourself
+                          </p>
+                          <p className="text-sm text-slate-500 dark:text-dark-text-tertiary">
+                            © 2025 BUCC - Empowering creativity through technology
                           </p>
                         </div>
                       </div>
