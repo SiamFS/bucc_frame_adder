@@ -38,14 +38,14 @@
 @layer components {
   .glass-morphism {
     @apply backdrop-blur-lg bg-white/80 border border-white/30 shadow-2xl;
-    @apply dark:bg-dark-bg-secondary/80 dark:border-dark-border-primary/30;
+    @apply dark:bg-dark-bg-secondary/80 dark:border-dark-border-primary/30 dark:text-dark-text-primary;
     backdrop-filter: blur(20px);
     transition: background-color 0.3s ease, border-color 0.3s ease;
   }
   
   .glass-morphism-dark {
     @apply backdrop-blur-lg bg-slate-900/80 border border-slate-700/30 shadow-2xl;
-    @apply dark:bg-dark-bg-primary/80 dark:border-dark-border-secondary/30;
+    @apply dark:bg-dark-bg-primary/80 dark:border-dark-border-secondary/30 dark:text-dark-text-primary;
     backdrop-filter: blur(20px);
   }
   
@@ -70,7 +70,7 @@
   
   .upload-area {
     @apply border-2 border-dashed border-primary-300 hover:border-primary-500 bg-gradient-to-br from-primary-50/70 to-accent-50/70 hover:from-primary-100/70 hover:to-accent-100/70 rounded-2xl p-8 text-center transition-all duration-300 cursor-pointer transform hover:scale-[1.01] active:scale-[0.99];
-    @apply dark:border-primary-500 dark:hover:border-primary-400 dark:from-dark-bg-tertiary/70 dark:to-dark-bg-secondary/70 dark:hover:from-dark-bg-tertiary dark:hover:to-dark-bg-secondary;
+    @apply dark:border-primary-500 dark:hover:border-primary-400 dark:from-dark-bg-tertiary/70 dark:to-dark-bg-secondary/70 dark:hover:from-dark-bg-tertiary dark:hover:to-dark-bg-secondary dark:text-dark-text-primary;
     background-size: 200% 200%;
     animation: subtle-gradient 4s ease infinite;
   }
@@ -88,6 +88,7 @@
   
   .control-panel {
     @apply glass-morphism rounded-2xl p-6 space-y-6 transform transition-all duration-300;
+    @apply dark:text-dark-text-primary;
   }
   
   .slider {

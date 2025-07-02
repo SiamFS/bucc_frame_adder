@@ -16,7 +16,7 @@ import {
   CogIcon,
   CloudArrowUpIcon
 } from '@heroicons/react/24/outline'
-import BuccFrame from '../assets/bucc_frame.svg'
+import BuccFrame from '../assets/bucc_frame.png'
 
 // Performance optimization: Web Worker for heavy image processing
 const createImageWorker = () => {
@@ -728,7 +728,7 @@ const ImageEditor = () => {
   }, [showNotification])
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 relative p-4 lg:p-0">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 lg:p-4 max-w-[1480px] mx-auto">
       {/* Notification System */}
       {notification && (
         <div className={`fixed top-4 right-4 z-50 max-w-sm p-4 rounded-xl shadow-2xl transition-all duration-300 transform animate-slide-up ${
@@ -745,12 +745,12 @@ const ImageEditor = () => {
         </div>
       )}
 
-      {/* Canvas Section - Show second on mobile, first on desktop */}
-      <div className="lg:col-span-3 order-2 lg:order-2">
-        <div className="glass-morphism rounded-2xl p-4 lg:p-6 animate-fade-in">
+      {/* Canvas Section - Preview (Center) */}
+      <div className="lg:col-span-6 order-2">
+        <div className="glass-morphism rounded-2xl p-3 lg:p-4 animate-fade-in shadow-lg h-full flex flex-col justify-center">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg lg:text-xl font-bold text-slate-800">Preview</h2>
-            <div className="flex items-center gap-2 text-xs lg:text-sm text-slate-600">
+            <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
+            <div className="flex items-center gap-2 text-xs lg:text-sm text-slate-600 dark:text-dark-text-secondary">
               <span className="status-indicator">
                 {canvasSize.width} × {canvasSize.height}
               </span>
@@ -758,7 +758,7 @@ const ImageEditor = () => {
           </div>
           
           <div 
-            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''}`}
+            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} flex justify-center items-center flex-grow`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -767,7 +767,7 @@ const ImageEditor = () => {
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className={`w-full h-auto max-h-[50vh] lg:max-h-[70vh] object-contain transition-all duration-200 bg-slate-100 border border-slate-200 rounded-lg ${
+              className={`w-full h-auto min-h-[300px] max-h-[70vh] lg:max-h-[80vh] object-contain transition-all duration-200 bg-slate-100 dark:bg-dark-bg-tertiary border border-slate-200 dark:border-dark-border-primary rounded-lg ${
                 backgroundImage ? 'cursor-move' : ''
               } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleStart}
@@ -782,13 +782,13 @@ const ImageEditor = () => {
             />
             
             {!backgroundImage && (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-400">
+              <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-dark-text-secondary">
                 <div className="text-center animate-bounce-gentle">
                   <PhotoIcon className="w-12 h-12 lg:w-16 lg:h-16 mx-auto mb-4 opacity-50" />
                   <p className="text-base lg:text-lg font-medium">Upload your background image</p>
                   <p className="text-xs lg:text-sm">BUCC frame will be applied automatically</p>
                   {!frameImage && (
-                    <p className="text-xs text-blue-500 mt-2">Loading BUCC frame...</p>
+                    <p className="text-xs text-blue-500 dark:text-blue-400 mt-2">Loading BUCC frame...</p>
                   )}
                 </div>
               </div>
@@ -812,19 +812,19 @@ const ImageEditor = () => {
         </div>
       </div>
 
-      {/* Control Panel - Show first on mobile, first on desktop */}
-      <div className="lg:col-span-1 order-1 lg:order-1 space-y-4 lg:space-y-6">
+      {/* Left Control Panel - Upload Background */}
+      <div className="lg:col-span-3 order-1 space-y-3 lg:space-y-4">
         {/* Upload Section */}
-        <div className="control-panel animate-bounce-in">
+        <div className="control-panel animate-bounce-in rounded-2xl p-4 lg:p-5 shadow-lg h-full">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg lg:text-xl font-bold text-slate-800 flex items-center gap-2">
-              <PhotoIcon className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
+            <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
+              <PhotoIcon className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
               Upload Background
             </h2>
             {backgroundImage && (
               <button
                 onClick={clearImages}
-                className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                 title="Clear background image"
               >
                 <TrashIcon className="w-4 h-4 lg:w-5 lg:h-5" />
@@ -858,14 +858,14 @@ const ImageEditor = () => {
                 </>
               ) : (
                 <>
-                  <PhotoIcon className="w-12 h-12 lg:w-16 lg:h-16 mx-auto text-blue-500 mb-4" />
-                  <p className="font-semibold text-slate-700 text-lg lg:text-xl mb-2">
+                  <PhotoIcon className="w-12 h-12 lg:w-16 lg:h-16 mx-auto text-blue-500 dark:text-blue-400 mb-4" />
+                  <p className="font-semibold text-slate-700 dark:text-dark-text-primary text-lg lg:text-xl mb-2">
                     {backgroundImage ? 'Background Image Loaded ✓' : 'Upload Background Photo'}
                   </p>
-                  <p className="text-sm lg:text-base text-slate-500 mb-4">
+                  <p className="text-sm lg:text-base text-slate-500 dark:text-dark-text-secondary mb-4">
                     {backgroundImage ? 'Click to change or drag & drop a new image' : 'Click to browse or drag & drop your image here'}
                   </p>
-                  <div className="flex items-center justify-center gap-2 text-xs lg:text-sm text-slate-400">
+                  <div className="flex items-center justify-center gap-2 text-xs lg:text-sm text-slate-400 dark:text-dark-text-tertiary">
                     <span>Supports: JPG, PNG, WebP</span>
                     <span>•</span>
                     <span>Max: 50MB</span>
@@ -883,14 +883,14 @@ const ImageEditor = () => {
           </div>
 
           {/* Frame Info */}
-          <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-700">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 font-bold text-sm">🖼️</span>
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
+                <span className="text-blue-600 dark:text-blue-300 font-bold text-sm">🖼️</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-blue-800">BUCC Frame Included</p>
-                <p className="text-xs text-blue-600">Professional BRAC University Computer Club frame applied automatically</p>
+                <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">BUCC Frame Included</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400">Professional BRAC University Computer Club frame applied automatically</p>
               </div>
             </div>
           </div>
@@ -898,11 +898,11 @@ const ImageEditor = () => {
           {/* Processing Progress */}
           {isProcessing && processingProgress > 0 && (
             <div className="mt-4">
-              <div className="flex justify-between text-sm text-slate-600 mb-2">
+              <div className="flex justify-between text-sm text-slate-600 dark:text-dark-text-secondary mb-2">
                 <span>Processing...</span>
                 <span>{Math.round(processingProgress)}%</span>
               </div>
-              <div className="w-full bg-slate-200 rounded-full h-2">
+              <div className="w-full bg-slate-200 dark:bg-dark-border-primary rounded-full h-2">
                 <div 
                   className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${processingProgress}%` }}
@@ -914,9 +914,9 @@ const ImageEditor = () => {
 
         {/* Canvas Size Selection */}
         {isAdvancedMode && (
-          <div className="control-panel animate-slide-up">
-            <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2">
-              <CogIcon className="w-5 h-5 text-orange-600" />
+          <div className="control-panel animate-slide-up rounded-2xl p-4 lg:p-5 shadow-lg h-full">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-3 flex items-center gap-2">
+              <CogIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               Output Resolution
             </h3>
             <div className="grid grid-cols-1 gap-2">
@@ -926,30 +926,34 @@ const ImageEditor = () => {
                   onClick={() => setCanvasSize(config)}
                   className={`p-3 rounded-lg text-left transition-all duration-200 ${
                     canvasSize.width === config.width && canvasSize.height === config.height
-                      ? 'bg-blue-100 border-2 border-blue-500 text-blue-800'
-                      : 'bg-white hover:bg-slate-50 border-2 border-slate-200'
+                      ? 'bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-500 text-blue-800 dark:text-blue-300'
+                      : 'bg-white dark:bg-dark-bg-secondary hover:bg-slate-50 dark:hover:bg-dark-bg-tertiary border-2 border-slate-200 dark:border-dark-border-primary'
                   }`}
                 >
-                  <div className="font-medium">{config.label}</div>
-                  <div className="text-sm text-slate-500">{config.width} × {config.height}</div>
+                  <div className="font-medium dark:text-dark-text-primary">{config.label}</div>
+                  <div className="text-sm text-slate-500 dark:text-dark-text-secondary">{config.width} × {config.height}</div>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Controls Section */}
-        {backgroundImage && (
-          <div className="control-panel animate-slide-up">
+        {/* Empty space where controls section used to be */}
+      </div>
+      
+      {/* Right Control Panel - Photo Controls */}
+      {backgroundImage && (
+        <div className="lg:col-span-3 order-3 space-y-3 lg:space-y-4">
+          <div className="control-panel animate-slide-up rounded-2xl p-4 lg:p-5 shadow-lg h-full">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <AdjustmentsHorizontalIcon className="w-6 h-6 text-green-600" />
+              <h2 className="text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
+                <AdjustmentsHorizontalIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
                 Photo Controls
               </h2>
               <button
                 onClick={() => setIsAdvancedMode(!isAdvancedMode)}
                 className={`p-2 rounded-lg transition-colors ${
-                  isAdvancedMode ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                  isAdvancedMode ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-slate-100 dark:bg-dark-bg-tertiary text-slate-600 dark:text-dark-text-secondary'
                 }`}
                 title="Toggle advanced mode"
               >
@@ -959,22 +963,27 @@ const ImageEditor = () => {
             
             {/* Frame Visibility Toggle */}
             {frameImage && (
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg mb-4">
-                <span className="font-medium text-slate-700">Show Frame</span>
+              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-dark-bg-tertiary rounded-lg mb-4">
+                <span className="font-medium text-slate-700 dark:text-dark-text-primary">Show Frame</span>
                 <button
                   onClick={() => setShowFrame(!showFrame)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    showFrame ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-500'
+                  className={`p-2 rounded-md transition-colors ${
+                    showFrame ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' : 'bg-slate-100 dark:bg-dark-border-primary text-slate-500 dark:text-dark-text-secondary'
                   }`}
+                  title={showFrame ? "Hide frame" : "Show frame"}
                 >
-                  {showFrame ? <EyeIcon className="w-5 h-5" /> : <EyeSlashIcon className="w-5 h-5" />}
+                  {showFrame ? (
+                    <EyeIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeSlashIcon className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             )}
             
             {/* Zoom Control */}
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
                 <MagnifyingGlassIcon className="w-4 h-4" />
                 Zoom: {zoom.toFixed(1)}x
               </label>
@@ -990,7 +999,7 @@ const ImageEditor = () => {
                 }}
                 className="w-full slider"
               />
-              <div className="flex justify-between text-xs text-slate-500">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-dark-text-tertiary">
                 <span>0.1x</span>
                 <span>1x</span>
                 <span>10x</span>
@@ -999,7 +1008,7 @@ const ImageEditor = () => {
 
             {/* Brightness Control */}
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
                 <SunIcon className="w-4 h-4" />
                 Brightness: {brightness}%
               </label>
@@ -1015,7 +1024,7 @@ const ImageEditor = () => {
 
             {/* Contrast Control */}
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
                 <SparklesIcon className="w-4 h-4" />
                 Contrast: {contrast}%
               </label>
@@ -1068,8 +1077,8 @@ const ImageEditor = () => {
               )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

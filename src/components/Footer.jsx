@@ -22,7 +22,7 @@ const Footer = () => {
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-slate-800 mb-1">
-                  BRAC University Computer Club
+                  BRAC University Computer Club 
                 </h3>
                 <p className="text-slate-600 text-lg">
                   Empowering the next generation of tech innovators at BRAC University

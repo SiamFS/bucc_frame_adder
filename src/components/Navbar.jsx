@@ -25,10 +25,7 @@ const Navbar = () => {
               />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-slate-100">
-                BRACU Computer Club
-              </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-lg text-slate-600 dark:text-slate-400">
                 Frame Editor
               </p>
             </div>
@@ -41,13 +38,6 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-full">
-              <SparklesIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                Professional Editor
-              </span>
-            </div>
-            
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
