@@ -3,7 +3,7 @@ import {
   BuildingOfficeIcon,
   AcademicCapIcon
 } from '@heroicons/react/24/outline'
-import BuccLogoIcon from '../assets/BUCC_Logo_icon.svg'
+import BuccLogoIcon from '../assets/BUCC_Logo.svg'
 
 const Footer = () => {
   return (
