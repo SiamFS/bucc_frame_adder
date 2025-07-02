@@ -63,6 +63,7 @@ const ImageEditor = () => {
   const [notification, setNotification] = useState(null)
   const [isAdvancedMode, setIsAdvancedMode] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [isMouseOverPreview, setIsMouseOverPreview] = useState(false)
   
   // Enhanced gesture state for pinch-to-zoom and smooth panning
   const [isPinching, setIsPinching] = useState(false)
@@ -209,8 +210,6 @@ const ImageEditor = () => {
       const img = await validateAndProcessFile(file, 'background')
       setBackgroundImage(img)
       setPosition({ x: 0, y: 0 }) // Reset position
-      
-      showNotification('Background image uploaded successfully!', 'success')
     } catch (error) {
       showNotification(error.message, 'error')
     } finally {
@@ -249,8 +248,6 @@ const ImageEditor = () => {
       const img = await validateAndProcessFile(imageFile, 'background')
       setBackgroundImage(img)
       setPosition({ x: 0, y: 0 })
-      
-      showNotification('Background image uploaded successfully!', 'success')
     } catch (error) {
       showNotification(error.message, 'error')
     } finally {
@@ -585,7 +582,6 @@ const ImageEditor = () => {
   // Enhanced wheel zoom with smooth scaling
   const handleWheel = useCallback((e) => {
     if (!backgroundImage) return
-    e.preventDefault()
     
     const canvas = canvasRef.current
     if (!canvas) return
@@ -746,6 +742,44 @@ const ImageEditor = () => {
     showNotification('Background image cleared', 'info')
   }, [showNotification])
 
+  // Global wheel event handler - only works when mouse is over preview area
+  useEffect(() => {
+    const handleGlobalWheel = (e) => {
+      // Check if the mouse is over the preview area
+      const previewContainer = document.querySelector('.canvas-container')
+      if (!previewContainer) return
+      
+      const rect = previewContainer.getBoundingClientRect()
+      const mouseX = e.clientX
+      const mouseY = e.clientY
+      
+      // Check if mouse is within the preview area bounds
+      const isOverPreview = (
+        mouseX >= rect.left &&
+        mouseX <= rect.right &&
+        mouseY >= rect.top &&
+        mouseY <= rect.bottom
+      )
+      
+      if (isOverPreview) {
+        // Prevent page scrolling and handle zoom
+        e.preventDefault()
+        e.stopPropagation()
+        
+        if (backgroundImage) {
+          handleWheel(e)
+        }
+      }
+    }
+
+    // Add global wheel listener with passive: false to allow preventDefault
+    document.addEventListener('wheel', handleGlobalWheel, { passive: false })
+
+    return () => {
+      document.removeEventListener('wheel', handleGlobalWheel)
+    }
+  }, [backgroundImage, handleWheel])
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-3 lg:p-4 max-w-[1560px] mx-auto">
       {/* Notification System */}
@@ -797,7 +831,6 @@ const ImageEditor = () => {
               onTouchStart={handleStart}
               onTouchMove={handleMove}
               onTouchEnd={handleEnd}
-              onWheel={handleWheel}
               style={{ touchAction: 'none' }}
             />
             
