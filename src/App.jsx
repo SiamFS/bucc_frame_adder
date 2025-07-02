@@ -14,30 +14,13 @@ function App() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Hashtag sets for BUCC frame
-  const hashtagSets = [
-    {
-      title: "BUCC Professional",
-      tags: "#BUCC #BRACUniversity #ComputerClub #TechCommunity #ProfessionalPhoto #FrameEditor #TechInnovation #StudentLife"
-    },
-    {
-      title: "University Pride",
-      tags: "#BRACUniversity #BUCC #UniversityLife #TechClub #StudentAchievement #Programming #Innovation #TechSkills"
-    },
-    {
-      title: "Tech & Design",
-      tags: "#PhotoEditor #FrameDesign #TechTools #WebApp #ReactJS #TailwindCSS #FrontendDevelopment #OpenSource"
-    },
-    {
-      title: "Social Media Ready",
-      tags: "#PhotoFrame #SocialMedia #ContentCreation #DigitalDesign #PhotoEditing #CreativeTools #TechLife #Bangladesh"
-    }
-  ]
+  // Hashtag set for BUCC frame
+  const hashtags = "#BUCC #BRACUniversity #ComputerClub #TechCommunity #ProfessionalPhoto #FrameEditor #TechInnovation #StudentLife #Programming #Innovation #TechSkills #PhotoFrame #SocialMedia #ContentCreation #DigitalDesign #Bangladesh"
 
-  const copyToClipboard = async (text, setTitle) => {
+  const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text)
-      setCopiedHashtag(setTitle)
+      setCopiedHashtag('copied')
       setTimeout(() => setCopiedHashtag(''), 2000)
     } catch (err) {
       console.error('Failed to copy text: ', err)
@@ -88,32 +71,29 @@ function App() {
                 📱 Social Media Hashtags - Click to Copy
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {hashtagSets.map((set) => (
-                  <button 
-                    key={set.title}
-                    className="bg-white/50 dark:bg-dark-bg-tertiary/50 rounded-xl p-4 border border-slate-200 dark:border-dark-border-primary hover:bg-white/70 dark:hover:bg-dark-bg-tertiary/70 transition-all duration-200 cursor-pointer group text-left w-full"
-                    onClick={() => copyToClipboard(set.tags, set.title)}
-                    title={`Click to copy ${set.title} hashtags`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-slate-700 dark:text-dark-text-primary text-sm">
-                        {set.title}
-                      </h4>
-                      <div className="flex items-center gap-2">
-                        {copiedHashtag === set.title && (
-                          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                            Copied! ✓
-                          </span>
-                        )}
-                        <ClipboardDocumentIcon className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
-                      </div>
+              <div className="flex justify-center">
+                <button 
+                  className="bg-white/50 dark:bg-dark-bg-tertiary/50 rounded-xl p-4 border border-slate-200 dark:border-dark-border-primary hover:bg-white/70 dark:hover:bg-dark-bg-tertiary/70 transition-all duration-200 cursor-pointer group text-left w-full max-w-2xl"
+                  onClick={() => copyToClipboard(hashtags)}
+                  title="Click to copy BUCC hashtags"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-dark-text-primary text-sm">
+                      BUCC Frame Hashtags
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      {copiedHashtag === 'copied' && (
+                        <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                          Copied! ✓
+                        </span>
+                      )}
+                      <ClipboardDocumentIcon className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-dark-text-secondary leading-relaxed break-words">
-                      {set.tags}
-                    </p>
-                  </button>
-                ))}
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-dark-text-secondary leading-relaxed break-words">
+                    {hashtags}
+                  </p>
+                </button>
               </div>
               
               <div className="mt-4 text-center">

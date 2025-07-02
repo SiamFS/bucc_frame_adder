@@ -667,12 +667,35 @@ const ImageEditor = () => {
         }
         
         exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
-        const scale = zoom
-        const imgWidth = backgroundImage.width * scale
-        const imgHeight = backgroundImage.height * scale
-        const x = (canvasSize.width - imgWidth) / 2 + position.x
-        const y = (canvasSize.height - imgHeight) / 2 + position.y
-        exportCtx.drawImage(backgroundImage, x, y, imgWidth, imgHeight)
+        
+        // Use the same scaling logic as in drawCanvas to ensure consistency
+        let scale = zoom;
+        
+        // Ensure image fills the frame completely (same logic as drawCanvas)
+        if (frameImage) {
+          const imgAspect = backgroundImage.width / backgroundImage.height;
+          const frameAspect = frameExportWidth / frameExportHeight;
+          
+          // Adjust scale to ensure the image always covers the entire frame area
+          if (imgAspect > frameAspect) {
+            const minScale = frameExportHeight / backgroundImage.height;
+            scale = Math.max(scale, minScale);
+          } else {
+            const minScale = frameExportWidth / backgroundImage.width;
+            scale = Math.max(scale, minScale);
+          }
+        }
+        
+        // Recalculate dimensions with potentially adjusted scale
+        const finalImgWidth = backgroundImage.width * scale;
+        const finalImgHeight = backgroundImage.height * scale;
+        
+        // Center and apply position offset (same as drawCanvas)
+        const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
+        const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
+        
+        // Draw background with clipping applied
+        exportCtx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
         exportCtx.restore()
       }
 
@@ -695,7 +718,7 @@ const ImageEditor = () => {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `frame-editor-${Date.now()}-${canvasSize.width}x${canvasSize.height}.png`
+        a.download = `Bucc_frame_photo.png`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
@@ -821,7 +844,7 @@ const ImageEditor = () => {
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className={`w-full h-full min-h-[300px] max-h-[55vh] lg:max-h-[95vh] object-cover transition-all duration-200 bg-slate-100 dark:bg-dark-bg-tertiary border border-slate-200 dark:border-dark-border-primary rounded-lg ${
+              className={`w-full h-full min-h-[280px] max-h-[50vh] lg:max-h-[95vh] object-cover transition-all duration-200 bg-slate-100 dark:bg-dark-bg-tertiary border border-slate-200 dark:border-dark-border-primary rounded-lg ${
                 backgroundImage ? 'cursor-move' : ''
               } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleStart}
