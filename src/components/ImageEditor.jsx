@@ -493,9 +493,17 @@ const ImageEditor = () => {
     }
   }, [backgroundImage, frameImage]) // Removed autoFitToFrame from dependencies
 
-  // Redraw canvas only when its dependencies change, preventing idle flickering
+  // Optimized canvas updates with requestAnimationFrame to prevent flickering
   useEffect(() => {
-    drawCanvas()
+    const updateCanvas = () => {
+      drawCanvas()
+    }
+
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+    }
+    
+    animationFrameRef.current = requestAnimationFrame(updateCanvas)
   }, [drawCanvas])
 
   // Enhanced touch and gesture utilities
@@ -1038,7 +1046,7 @@ const ImageEditor = () => {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            style={{ minHeight: '400px', height: 'calc(100vh - 220px)' }}
+            style={{ minHeight: '400px', height: 'calc(100vh - 220px)', isolation: 'isolate', transform: 'translateZ(0)', willChange: 'transform', zIndex: 1 }}
             aria-label="Image preview and editing area"
           >
             <canvas
@@ -1047,7 +1055,7 @@ const ImageEditor = () => {
               height={canvasSize.height}
               className={`w-full h-full min-h-[350px] max-h-[60vh] lg:max-h-[95vh] object-contain bg-slate-50 dark:bg-dark-bg-tertiary ${
                 backgroundImage ? 'cursor-move' : ''
-              } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isGestureActive ? 'gesture-canvas' : ''}`}
               onMouseDown={handleStart}
               onMouseMove={handleMove}
               onMouseUp={handleEnd}
@@ -1061,7 +1069,10 @@ const ImageEditor = () => {
                 userSelect: 'none',
                 transform: 'translateZ(0)',
                 backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden'
+                WebkitBackfaceVisibility: 'hidden',
+                willChange: 'transform',
+                isolation: 'isolate',
+                zIndex: 2
               }}
             />
             
@@ -1155,7 +1166,6 @@ const ImageEditor = () => {
             />
           </button>
 
-          {/* Frame Info */}
           {/* Processing Progress */}
           {isProcessing && processingProgress > 0 && (
             <div className="mt-4">
@@ -1231,7 +1241,7 @@ const ImageEditor = () => {
               value={zoom}
               onChange={setZoom}
               label="Zoom"
-              icon={<MagnifyingGlassIcon className="w-3 h-3 lg:w-4 lg:h-4" />}
+              icon={<MagnifyingGlassIcon className="w-4 h-4" />}
               valueLabel={`${zoom.toFixed(1)}x`}
             />
 
@@ -1239,11 +1249,10 @@ const ImageEditor = () => {
             <CustomSlider
               min={50}
               max={150}
-              step={1}
               value={brightness}
               onChange={setBrightness}
               label="Brightness"
-              icon={<SunIcon className="w-3 h-3 lg:w-4 lg:h-4" />}
+              icon={<SunIcon className="w-4 h-4" />}
               valueLabel={`${brightness}%`}
             />
 
@@ -1251,11 +1260,10 @@ const ImageEditor = () => {
             <CustomSlider
               min={50}
               max={150}
-              step={1}
               value={contrast}
               onChange={setContrast}
               label="Contrast"
-              icon={<SparklesIcon className="w-3 h-3 lg:w-4 lg:h-4" />}
+              icon={<SparklesIcon className="w-4 h-4" />}
               valueLabel={`${contrast}%`}
             />
 

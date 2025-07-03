@@ -234,6 +234,25 @@
   }
 }
 
+/* Extra: Prevent flicker during gestures by disabling transitions/filters */
+.gesture-canvas {
+  transition: none !important;
+  filter: none !important;
+  will-change: transform;
+  transform: translateZ(0);
+  isolation: isolate;
+  z-index: 2;
+}
+
+/* Ensure canvas and container always use hardware acceleration and stacking context */
+.canvas-container, .canvas-container canvas {
+  will-change: transform;
+  transform: translateZ(0);
+  isolation: isolate;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
 @layer utilities {
   .animate-gradient {
     background-size: 400% 400%;
