@@ -417,40 +417,7 @@ const ImageEditor = () => {
     return { frameDisplayWidth, frameDisplayHeight, frameX, frameY }
   }, [frameImage, canvasSize])
 
-  // Helper function to draw background image
-  const drawBackgroundImage = useCallback((ctx, frameDimensions) => {
-    if (!backgroundImage) return
 
-    ctx.save()
-    
-    // Create clipping path to match frame area if frame exists
-    if (frameImage) {
-      ctx.beginPath()
-      ctx.rect(frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
-      ctx.clip()
-    }
-    
-    // Apply filters using CSS filters for better performance
-    // Only apply filters when not actively gesturing to prevent mobile flicker
-    const isActivelyGesturing = isDragging || isPinching
-    if (!isActivelyGesturing) {
-      ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
-    }
-    
-    // Use the user's current zoom setting directly
-    const scale = zoom;
-    const finalImgWidth = backgroundImage.width * scale;
-    const finalImgHeight = backgroundImage.height * scale;
-    
-    // Center and apply position offset
-    const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
-    const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
-    
-    // Draw background with clipping applied
-    ctx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
-    
-    ctx.restore()
-  }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize, isDragging, isPinching])
 
   // Enhanced canvas drawing with performance optimization and flicker prevention
   const drawCanvas = useCallback(() => {
@@ -473,14 +440,48 @@ const ImageEditor = () => {
     // Calculate frame dimensions
     const frameDimensions = calculateFrameDimensions()
 
-    // Draw background image
-    drawBackgroundImage(ctx, frameDimensions)
-
-    if (frameImage && showFrame && backgroundImage) {
-      // Draw frame with preserved aspect ratio (only when background image is present)
-      ctx.drawImage(frameImage, frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
+    // Only proceed with drawing if there's a background image
+    if (backgroundImage) {
+      // First draw the background with clipping if needed
+      ctx.save()
+      
+      // Create clipping path to match frame area if frame exists
+      if (frameImage) {
+        ctx.beginPath()
+        ctx.rect(frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
+        ctx.clip()
+      }
+      
+      // Apply background filters when not actively gesturing
+      const isActivelyGesturing = isDragging || isPinching || isGestureActive
+      if (!isActivelyGesturing) {
+        ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
+      }
+      
+      // Use the user's current zoom setting directly
+      const scale = zoom;
+      const finalImgWidth = backgroundImage.width * scale;
+      const finalImgHeight = backgroundImage.height * scale;
+      
+      // Center and apply position offset
+      const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
+      const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
+      
+      // Draw background with clipping applied
+      ctx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
+      
+      ctx.restore()
+      
+      // Only draw frame when both frame and background image exist, and showFrame is true
+      if (frameImage && showFrame) {
+        // Use source-over to ensure frame is always drawn on top
+        ctx.globalCompositeOperation = 'source-over';
+        
+        // Important: Draw frame with preserved aspect ratio after everything else
+        ctx.drawImage(frameImage, frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
+      }
     }
-  }, [backgroundImage, frameImage, showFrame, calculateFrameDimensions, drawBackgroundImage])
+  }, [backgroundImage, frameImage, showFrame, calculateFrameDimensions, isDragging, isPinching, isGestureActive, brightness, contrast, zoom, position, canvasSize])
 
   // Auto-fit when both images are loaded (only on initial load)
   useEffect(() => {
@@ -491,17 +492,9 @@ const ImageEditor = () => {
     }
   }, [backgroundImage, frameImage]) // Removed autoFitToFrame from dependencies
 
-  // Optimized canvas updates with requestAnimationFrame
+  // Redraw canvas only when its dependencies change, preventing idle flickering
   useEffect(() => {
-    const updateCanvas = () => {
-      drawCanvas()
-    }
-
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current)
-    }
-    
-    animationFrameRef.current = requestAnimationFrame(updateCanvas)
+    drawCanvas()
   }, [drawCanvas])
 
   // Enhanced touch and gesture utilities
@@ -586,7 +579,12 @@ const ImageEditor = () => {
   // Enhanced gesture start handler with pinch detection and flicker prevention
   const handleStart = useCallback((e) => {
     if (!backgroundImage) return
-    e.preventDefault()
+    
+    // Only try to prevent default for mouse events, not touch events
+    // Touch events are handled with passive listeners to improve performance
+    if (!e.touches) {
+      e.preventDefault()
+    }
     
     // Stop any ongoing inertia
     setIsInertiaActive(false)
@@ -681,7 +679,12 @@ const ImageEditor = () => {
   // Enhanced move handler with pinch-to-zoom and smooth panning
   const handleMove = useCallback((e) => {
     if (!backgroundImage) return
-    e.preventDefault()
+    
+    // Only try to prevent default for mouse events, not touch events
+    // Touch events are handled with passive listeners to improve performance
+    if (!e.touches) {
+      e.preventDefault()
+    }
     
     const currentTime = Date.now()
     const pos = getEventPosition(e)
@@ -700,7 +703,11 @@ const ImageEditor = () => {
 
   // Enhanced end handler with inertia and gesture state cleanup
   const handleEnd = useCallback((e) => {
-    e.preventDefault()
+    // Only try to prevent default for mouse events, not touch events
+    // Touch events are handled with passive listeners to improve performance
+    if (!e.touches && !e.changedTouches) {
+      e.preventDefault()
+    }
     
     const currentTime = Date.now()
     const timeSinceStart = currentTime - touchStartTimeRef.current
@@ -952,6 +959,30 @@ const ImageEditor = () => {
     }
   }, [backgroundImage, handleWheel, isMouseOverPreview])
 
+  // Set up non-passive touch events for better mobile gesture handling
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    // Custom event handlers that properly handle touch events
+    const touchStartHandler = (e) => handleStart(e)
+    const touchMoveHandler = (e) => handleMove(e)
+    const touchEndHandler = (e) => handleEnd(e)
+
+    // Add touch event listeners with { passive: true } to improve performance
+    // This means preventDefault() cannot be called in these handlers
+    canvas.addEventListener('touchstart', touchStartHandler, { passive: true })
+    canvas.addEventListener('touchmove', touchMoveHandler, { passive: true })
+    canvas.addEventListener('touchend', touchEndHandler, { passive: true })
+
+    return () => {
+      // Clean up event listeners
+      canvas.removeEventListener('touchstart', touchStartHandler)
+      canvas.removeEventListener('touchmove', touchMoveHandler)
+      canvas.removeEventListener('touchend', touchEndHandler)
+    }
+  }, [handleStart, handleMove, handleEnd])
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 p-3 lg:p-4 max-w-[1560px] mx-auto">
       {/* Notification System */}
@@ -1023,7 +1054,7 @@ const ImageEditor = () => {
               onTouchStart={handleStart}
               onTouchMove={handleMove}
               onTouchEnd={handleEnd}
-              style={{ touchAction: 'none' }}
+              style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
             />
             
             {!backgroundImage && (
