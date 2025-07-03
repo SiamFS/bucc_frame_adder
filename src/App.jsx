@@ -60,6 +60,52 @@ function App() {
             </div>
           </header>
 
+          {/* How to Use Section (now with 4 steps) */}
+          <section className="mb-12 text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="glass-morphism rounded-3xl p-8 max-w-4xl mx-auto bg-white/10 dark:bg-dark-bg-secondary/20 backdrop-blur-md border border-white/20 dark:border-dark-border-primary">
+              <h2 className="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-dark-text-primary mb-6">
+                How to Use {organizationConfig.shortName} Frame Editor Pro
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-left">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-600 dark:from-primary-400 dark:to-secondary-500 rounded-2xl flex items-center justify-center mb-4 transform hover:scale-110 transition-transform duration-300">
+                    <span className="text-2xl font-bold text-white">1</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Upload Images</h3>
+                  <p className="text-slate-600 dark:text-dark-text-secondary text-sm">
+                    Add your background photo and transparent PNG frame. Files are processed locally in your browser.
+                  </p>
+                </div>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-secondary-500 to-accent-600 dark:from-secondary-400 dark:to-accent-500 rounded-2xl flex items-center justify-center mb-4 transform hover:scale-110 transition-transform duration-300">
+                    <span className="text-2xl font-bold text-white">2</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Edit & Adjust</h3>
+                  <p className="text-slate-600 dark:text-dark-text-secondary text-sm">
+                    Use Controls to adjust brightness, contrast, zoom, and position. Real-time preview shows changes instantly.
+                  </p>
+                </div>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-primary-600 dark:from-accent-400 dark:to-primary-500 rounded-2xl flex items-center justify-center mb-4 transform hover:scale-110 transition-transform duration-300">
+                    <span className="text-2xl font-bold text-white">3</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Download</h3>
+                  <p className="text-slate-600 dark:text-dark-text-secondary text-sm">
+                    Export your final image in Full HD quality (1920×1080) or higher resolution formats.
+                  </p>
+                </div>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 dark:from-blue-300 dark:to-blue-500 rounded-2xl flex items-center justify-center mb-4 transform hover:scale-110 transition-transform duration-300">
+                    <span className="text-2xl font-bold text-white">4</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Copy Caption</h3>
+                  
+                  <p className="text-xs text-slate-500 dark:text-dark-text-tertiary">Paste this as your profile caption when you share your BUCC frame photo!</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Main Editor */}
           <main className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
             <ImageEditor />
@@ -101,50 +147,6 @@ function App() {
                 <p className="text-xs text-slate-500 dark:text-dark-text-tertiary">
                   💡 Share your BUCC frame creations and tag us on social media!
                 </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Instructions Section */}
-          <section className="mt-16 text-center animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <div className="glass-morphism rounded-3xl p-8 max-w-4xl mx-auto bg-white/10 dark:bg-dark-bg-secondary/20 backdrop-blur-md border border-white/20 dark:border-dark-border-primary">
-              <h2 className="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-dark-text-primary mb-6">
-                How to Use {organizationConfig.shortName} Frame Editor Pro
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-600 dark:from-primary-400 dark:to-secondary-500 rounded-2xl flex items-center justify-center mb-4 transform hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl font-bold text-white">1</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Upload Images</h3>
-                  <p className="text-slate-600 dark:text-dark-text-secondary text-sm">
-                    Add your background photo and transparent PNG frame. 
-                    Files are processed locally in your browser.
-                  </p>
-                </div>
-                
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-secondary-500 to-accent-600 dark:from-secondary-400 dark:to-accent-500 rounded-2xl flex items-center justify-center mb-4 transform hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl font-bold text-white">2</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Edit & Adjust</h3>
-                  <p className="text-slate-600 dark:text-dark-text-secondary text-sm">
-                    Use Controls to adjust brightness, contrast, zoom, 
-                    and position. Real-time preview shows changes instantly.
-                  </p>
-                </div>
-                
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-primary-600 dark:from-accent-400 dark:to-primary-500 rounded-2xl flex items-center justify-center mb-4 transform hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl font-bold text-white">3</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Download</h3>
-                  <p className="text-slate-600 dark:text-dark-text-secondary text-sm">
-                    Export your final image in Full HD quality (1920×1080) 
-                    or higher resolution formats.
-                  </p>
-                </div>
               </div>
             </div>
           </section>
