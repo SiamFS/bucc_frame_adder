@@ -548,7 +548,22 @@ const ImageEditor = () => {
     }
   }, [canvasSize, getTouchCenter])
 
-
+  // --- Flicker prevention: Remove all CSS filters/transitions from canvas during gestures ---
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    if (isGestureActive) {
+      // Remove filter and transition during gesture
+      canvas.style.filter = 'none';
+      canvas.style.transition = 'none';
+      canvas.style.willChange = 'transform';
+    } else {
+      // Restore to default (no filter on element, only on context)
+      canvas.style.filter = '';
+      canvas.style.transition = '';
+      canvas.style.willChange = 'transform';
+    }
+  }, [isGestureActive]);
 
   // Smooth inertia animation for natural movement
   const applyInertia = useCallback(() => {
