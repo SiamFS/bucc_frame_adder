@@ -17,26 +17,9 @@ const CustomSlider = ({
 }) => {
   const trackRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [trackWidth, setTrackWidth] = useState(0)
   
   // Calculate percentage for styling and positioning
   const percentage = ((value - min) / (max - min)) * 100
-  
-  // Update track width measurement
-  useEffect(() => {
-    if (trackRef.current) {
-      setTrackWidth(trackRef.current.getBoundingClientRect().width)
-    }
-    
-    const updateWidth = () => {
-      if (trackRef.current) {
-        setTrackWidth(trackRef.current.getBoundingClientRect().width)
-      }
-    }
-    
-    window.addEventListener('resize', updateWidth)
-    return () => window.removeEventListener('resize', updateWidth)
-  }, [])
   
   // Handle thumb drag
   const handleThumbMouseDown = useCallback((e) => {
@@ -77,7 +60,7 @@ const CustomSlider = ({
   
   // Handle touch move
   const handleTouchMove = useCallback((e) => {
-    if (isDragging && e.touches && e.touches[0]) {
+    if (isDragging && e.touches?.[0]) {
       updateValue(e.touches[0].clientX)
     }
   }, [isDragging, updateValue])
@@ -118,43 +101,86 @@ const CustomSlider = ({
     e.stopPropagation()
     return false
   }, [])
+
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+      e.preventDefault()
+      const newValue = Math.max(min, value - step)
+      onChange(newValue)
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      const newValue = Math.min(max, value + step)
+      onChange(newValue)
+    } else if (e.key === 'Home') {
+      e.preventDefault()
+      onChange(min)
+    } else if (e.key === 'End') {
+      e.preventDefault()
+      onChange(max)
+    }
+  }, [min, max, step, value, onChange])
   
   return (
-    <div className="space-y-1 lg:space-y-2">
-      <label className="flex items-center justify-between gap-1 lg:gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
-        <span className="flex items-center gap-1 lg:gap-2">
-          {icon}
-          {label}
+    <div className="space-y-2">
+      {/* Label Row */}
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <span className="text-primary-500 dark:text-primary-400">{icon}</span>
+          <span>{label}</span>
+        </label>
+        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+          {valueLabel}
         </span>
-        <span>{valueLabel}</span>
-      </label>
-      
-      <div 
-        ref={trackRef}
-        className="w-full h-2 lg:h-3 bg-gradient-to-r from-slate-200 to-slate-300 dark:from-dark-border-primary dark:to-dark-border-secondary rounded-lg relative"
-        onClick={handleTrackClick}
-        onTouchStart={handleTrackClick}
-      >
-        {/* Filled track */}
-        <div
-          className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-500 to-accent-600 rounded-lg"
-          style={{ width: `${percentage}%` }}
-        />
-        
-        {/* Thumb */}
-        <div
-          className={`absolute top-1/2 w-6 h-6 bg-gradient-to-r from-primary-500 to-accent-600 rounded-full shadow-lg transform -translate-y-1/2 cursor-grab ${isDragging ? 'cursor-grabbing shadow-xl scale-110' : 'hover:shadow-xl hover:scale-105'} transition-transform`}
-          style={{ 
-            left: `calc(${percentage}% - ${(percentage * 12) / 100}px)`,
-          }}
-          onMouseDown={handleThumbMouseDown}
-          onTouchStart={handleThumbTouchStart}
-        />
       </div>
       
-      <div className="flex justify-between text-xs text-slate-500 dark:text-dark-text-tertiary">
+      {/* Slider Track */}
+      <div className="relative py-2">
+        <div 
+          ref={trackRef}
+          className="w-full h-1 sm:h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full relative shadow-inner"
+          role="slider"
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={value}
+          aria-label={label}
+          tabIndex={0}
+          onClick={handleTrackClick}
+          onTouchStart={handleTrackClick}
+          onKeyDown={handleKeyDown}
+        >
+          {/* Progress Fill */}
+          <div
+            className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-sm"
+            style={{ width: `${percentage}%` }}
+          />
+          
+          {/* Slider Thumb */}
+          <button
+            type="button"
+            data-slider-thumb="true"
+            className={`absolute top-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white border-2 border-primary-500 rounded-full shadow-md transform -translate-y-1/2 -translate-x-1/2 cursor-grab focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1 transition-all duration-150 ${
+              isDragging 
+                ? 'cursor-grabbing scale-125 shadow-lg border-primary-600' 
+                : 'hover:scale-110 hover:shadow-md hover:border-primary-600'
+            }`}
+            style={{ 
+              left: `${percentage}%`,
+            }}
+            aria-label={`${label} thumb`}
+            onMouseDown={handleThumbMouseDown}
+            onTouchStart={handleThumbTouchStart}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+      </div>
+      
+      {/* Value Range Indicators */}
+      <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-0.5">
         <span>{min}{label.includes('Zoom') ? 'x' : '%'}</span>
-        <span>{label.includes('Zoom') ? '1x' : '100%'}</span>
+        <span className="text-slate-500 dark:text-slate-400 font-medium">
+          {label.includes('Zoom') ? '1x' : '100%'}
+        </span>
         <span>{max}{label.includes('Zoom') ? 'x' : '%'}</span>
       </div>
     </div>

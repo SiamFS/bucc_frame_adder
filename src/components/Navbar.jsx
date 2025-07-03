@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon} from '@heroicons/react/24/outline'
 import { useTheme } from '../contexts/ThemeContext'
 import BuccLogo from '../assets/BUCC_Logo_icon.svg'
 

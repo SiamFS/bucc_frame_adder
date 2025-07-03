@@ -948,20 +948,20 @@ const ImageEditor = () => {
 
       {/* Canvas Section - Preview (Center) */}
       <div className="lg:col-span-6 order-2">
-        <div className="glass-morphism rounded-xl lg:rounded-2xl p-1 lg:p-2 shadow-lg h-full flex flex-col">
-          <div className="flex items-center justify-between mb-1 py-1 px-1 lg:px-0">
+        <div className="glass-morphism rounded-2xl lg:rounded-3xl p-2 lg:p-3 shadow-xl h-full flex flex-col">
+          <div className="flex items-center justify-between mb-2 py-1 px-1 lg:px-2">
             <div className="flex items-center gap-3">
               <h2 className="text-sm lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
               {/* Interactive Controls - Beside Preview Title */}
               {backgroundImage && (
-                <div className="bg-black/5 dark:bg-white/5 backdrop-blur-sm rounded-lg px-2 py-1 lg:px-3 lg:py-1 text-xs lg:text-sm border border-black/5 dark:border-white/5">
-                  <div className="flex items-center gap-2 lg:gap-3 text-slate-500 dark:text-slate-400">
-                    <div className="flex items-center gap-1">
-                      <span className="text-blue-400">•</span>
+                <div className="bg-black/5 dark:bg-white/5 backdrop-blur-sm rounded-xl px-3 py-1.5 lg:px-4 lg:py-2 text-xs lg:text-sm border border-black/10 dark:border-white/10">
+                  <div className="flex items-center gap-3 lg:gap-4 text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
                       <span>Drag</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-green-400">•</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 bg-green-400 rounded-full"></span>
                       <span>Zoom</span>
                     </div>
                   </div>
@@ -969,14 +969,14 @@ const ImageEditor = () => {
               )}
             </div>
             <div className="flex items-center gap-1 lg:gap-2 text-xs text-slate-600 dark:text-dark-text-secondary">
-              <span className="status-indicator text-xs">
+              <span className="status-indicator text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-lg">
                 {canvasSize.width} × {canvasSize.height}
               </span>
             </div>
           </div>
           
           <div 
-            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} flex-1 flex-grow`}
+            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} flex-1 flex-grow rounded-xl lg:rounded-2xl overflow-hidden`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -986,7 +986,7 @@ const ImageEditor = () => {
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className={`w-full h-full min-h-[350px] max-h-[60vh] lg:max-h-[95vh] object-cover transition-all duration-200 bg-slate-100 dark:bg-dark-bg-tertiary border border-slate-200 dark:border-dark-border-primary rounded-lg ${
+              className={`w-full h-full min-h-[350px] max-h-[60vh] lg:max-h-[95vh] object-contain transition-all duration-300 bg-slate-50 dark:bg-dark-bg-tertiary ${
                 backgroundImage ? 'cursor-move' : ''
               } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleStart}
@@ -1001,12 +1001,15 @@ const ImageEditor = () => {
             
             {!backgroundImage && (
               <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-dark-text-secondary">
-                <div className="text-center animate-bounce-gentle">
-                  <PhotoIcon className="w-12 h-12 lg:w-16 lg:h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-base lg:text-lg font-medium">Upload your background image</p>
-                  <p className="text-xs lg:text-sm">BUCC frame will be applied automatically</p>
+                <div className="text-center animate-pulse-gentle">
+                  <PhotoIcon className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 opacity-40" />
+                  <p className="text-lg lg:text-xl font-medium mb-2">Upload your background image</p>
+                  <p className="text-sm lg:text-base text-slate-500 dark:text-slate-400">BUCC frame will be applied automatically</p>
                   {!frameImage && (
-                    <p className="text-xs text-blue-500 dark:text-blue-400 mt-2">Loading BUCC frame...</p>
+                    <div className="mt-3 inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Loading BUCC frame...</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1021,8 +1024,8 @@ const ImageEditor = () => {
         {/* Upload Section */}
         <div className="control-panel rounded-xl lg:rounded-2xl p-3 lg:p-5 shadow-lg h-full flex flex-col">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <h2 className="text-base lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
-              <PhotoIcon className="w-4 h-4 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-base lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2 whitespace-nowrap">
+              <PhotoIcon className="w-4 h-4 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
               <span>Upload Background</span>
             </h2>
             {backgroundImage && (
@@ -1052,27 +1055,27 @@ const ImageEditor = () => {
               }
             }}
           >
-            <div className="text-center">
+            <div className="text-center py-4 lg:py-6">
               {isDragOver ? (
                 <>
-                  <CloudArrowUpIcon className="w-8 h-8 lg:w-16 lg:h-16 mx-auto text-green-500 mb-2 lg:mb-4 animate-bounce" />
-                  <p className="font-semibold text-green-700 text-sm lg:text-xl mb-1 lg:mb-2">
+                  <CloudArrowUpIcon className="w-12 h-12 lg:w-16 lg:h-16 mx-auto text-green-500 mb-3 lg:mb-4 animate-bounce" />
+                  <p className="font-semibold text-green-700 text-base lg:text-xl mb-2">
                     Drop your image here!
                   </p>
                 </>
               ) : (
                 <>
-                  <PhotoIcon className="w-8 h-8 lg:w-16 lg:h-16 mx-auto text-blue-500 dark:text-blue-400 mb-2 lg:mb-4" />
-                  <p className="font-semibold text-slate-700 dark:text-dark-text-primary text-sm lg:text-xl mb-1 lg:mb-2">
+                  <PhotoIcon className="w-12 h-12 lg:w-16 lg:h-16 mx-auto text-blue-500 dark:text-blue-400 mb-3 lg:mb-4" />
+                  <p className="font-semibold text-slate-700 dark:text-dark-text-primary text-base lg:text-xl mb-2 lg:mb-3">
                     {backgroundImage ? 'Background Image Loaded ✓' : 'Upload Background Photo'}
                   </p>
-                  <p className="text-xs lg:text-base text-slate-500 dark:text-dark-text-secondary mb-2 lg:mb-4">
+                  <p className="text-sm lg:text-base text-slate-500 dark:text-dark-text-secondary mb-3 lg:mb-4 px-4">
                     {backgroundImage ? 'Click to change or drag & drop a new image' : 'Click to browse or drag & drop your image here'}
                   </p>
-                  <div className="flex items-center justify-center gap-1 lg:gap-2 text-xs text-slate-400 dark:text-dark-text-tertiary">
-                    <span>Supports: JPG, PNG, WebP</span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="hidden sm:inline">Max: 50MB</span>
+                  <div className="flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-dark-text-tertiary bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-full mx-auto w-fit">
+                    <span>JPG, PNG, WebP</span>
+                    <span className="w-1 h-1 bg-slate-400 rounded-full"></span>
+                    <span>Max 50MB</span>
                   </div>
                 </>
               )}
@@ -1087,18 +1090,6 @@ const ImageEditor = () => {
           </div>
 
           {/* Frame Info */}
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-700">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 dark:text-blue-300 font-bold text-sm">🖼️</span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">BUCC Frame Included</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400">BRAC University Computer Club frame applied automatically</p>
-              </div>
-            </div>
-          </div>
-
           {/* Processing Progress */}
           {isProcessing && processingProgress > 0 && (
             <div className="mt-4">
@@ -1115,8 +1106,21 @@ const ImageEditor = () => {
             </div>
           )}
           
-          {/* Spacer to push content to match photo controls height */}
+          {/* Spacer to push BUCC Frame info to bottom */}
           <div className="flex-grow"></div>
+
+          {/* BUCC Frame Info - Positioned at bottom to align with Download button */}
+          <div className="mt-auto p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-700">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
+                <span className="text-blue-600 dark:text-blue-300 font-bold text-sm">🖼️</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">BUCC Frame Included</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400">BRAC University Computer Club frame applied automatically</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Empty space where controls section used to be */}

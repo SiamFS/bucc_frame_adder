@@ -118,25 +118,28 @@
     @apply dark:text-dark-text-primary;
   }
   
-  .slider {
+  /* Native HTML range input styles - not used in CustomSlider */
+  input[type="range"].slider {
     @apply bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg appearance-none cursor-pointer h-3 focus:outline-none focus:ring-4 focus:ring-primary-500/30 transition-all duration-200;
     @apply dark:from-dark-border-primary dark:to-dark-border-secondary;
   }
   
-  .slider::-webkit-slider-thumb {
+  input[type="range"].slider::-webkit-slider-thumb {
     @apply appearance-none w-6 h-6 bg-gradient-to-r from-primary-500 to-accent-600 rounded-full cursor-pointer shadow-lg hover:shadow-xl transform transition-all duration-200;
   }
   
-  .slider::-moz-range-thumb {
+  input[type="range"].slider::-moz-range-thumb {
     @apply w-6 h-6 bg-gradient-to-r from-primary-500 to-accent-600 rounded-full cursor-pointer border-0 shadow-lg;
   }
   
   .canvas-container {
-    @apply relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 shadow-inner h-full w-full;
-    @apply dark:from-dark-bg-tertiary dark:to-dark-bg-secondary;
+    @apply relative bg-gradient-to-br from-slate-50 to-slate-100 shadow-inner h-full w-full border border-slate-200/50;
+    @apply dark:from-dark-bg-tertiary dark:to-dark-bg-secondary dark:border-dark-border-primary/50;
     display: flex;
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
   
   .loading-spinner {
@@ -194,7 +197,7 @@
       @apply p-3 space-y-3;
     }
     
-    .slider {
+    input[type="range"].slider {
       @apply h-2;
     }
     
@@ -208,8 +211,8 @@
       max-height: 65vh !important;
     }
     
-    /* Improve touch targets */
-    button {
+    /* Improve touch targets - exclude slider thumbs */
+    button:not([data-slider-thumb]) {
       min-height: 44px;
       min-width: 44px;
     }
