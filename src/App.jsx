@@ -15,8 +15,12 @@ function App() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Hashtag set for BUCC frame
-  const hashtags = "#BUCC #BRACUniversity #ComputerClub #TechCommunity #ProfessionalPhoto #FrameEditor #TechInnovation #StudentLife #Programming #Innovation #TechSkills #PhotoFrame #SocialMedia #ContentCreation #DigitalDesign #Bangladesh"
+  // Updated text for Bit Battles
+  const bitBattlesText = `Instead of just scrolling past, why not take the challenge thrown by @BUCC? And Code, Compete, Conquer at 𝗕𝗨𝗖𝗖 𝗕𝗶𝘁 𝗕𝗮𝘁𝘁𝗹𝗲𝘀 
+🎯 Register now before the slots run out at:
+https://bitbattles.bracucc.org
+See you at the arena!
+#BitBattles #BUCC`
 
   const copyToClipboard = async (text) => {
     try {
@@ -111,41 +115,44 @@ function App() {
             <ImageEditor />
           </main>
 
-          {/* Hashtag Section */}
+          {/* Bit Battles Section */}
           <section className="mt-12 animate-fade-in" style={{ animationDelay: '0.5s' }}>
             <div className="glass-morphism rounded-2xl p-6 max-w-4xl mx-auto bg-white/10 dark:bg-dark-bg-secondary/20 backdrop-blur-md border border-white/20 dark:border-dark-border-primary">
               <h3 className="text-lg font-semibold text-slate-800 dark:text-dark-text-primary mb-4 text-center">
-                📱 Social Media Hashtags - Click to Copy
+                📝 Caption for Your BUCC Frame Post
               </h3>
               
               <div className="flex justify-center">
                 <button 
                   className="bg-white/50 dark:bg-dark-bg-tertiary/50 rounded-xl p-4 border border-slate-200 dark:border-dark-border-primary hover:bg-white/70 dark:hover:bg-dark-bg-tertiary/70 transition-all duration-200 cursor-pointer group text-left w-full max-w-2xl"
-                  onClick={() => copyToClipboard(hashtags)}
-                  title="Click to copy BUCC hashtags"
+                  onClick={() => copyToClipboard(bitBattlesText)}
+                  title="Click to copy Bit Battles text"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-slate-700 dark:text-dark-text-primary text-sm">
-                      BUCC Frame Hashtags
+                      Bit Battles
                     </h4>
                     <div className="flex items-center gap-2">
-                      {copiedHashtag === 'copied' && (
+                      {copiedHashtag === 'copied' ? (
                         <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                          Copied! ✓
+                          Copied!
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                          Copy
                         </span>
                       )}
-                      <ClipboardDocumentIcon className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-dark-text-secondary leading-relaxed break-words">
-                    {hashtags}
+                  <p className="text-xs text-slate-600 dark:text-dark-text-secondary leading-relaxed break-words whitespace-pre-line">
+                    {bitBattlesText}
                   </p>
                 </button>
               </div>
               
               <div className="mt-4 text-center">
                 <p className="text-xs text-slate-500 dark:text-dark-text-tertiary">
-                  💡 Share your BUCC frame creations and tag us on social media!
+                  💡 Copy this caption and use it with your BUCC frame post on social media!
                 </p>
               </div>
             </div>
