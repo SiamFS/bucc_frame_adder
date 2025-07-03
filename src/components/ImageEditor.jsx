@@ -88,8 +88,7 @@ const ImageEditor = () => {
   const CANVAS_CONFIGS = useMemo(() => ({
     HD: { width: 1920, height: 1080, label: 'Full HD (1920x1080)' },
     FHD: { width: 2560, height: 1440, label: '2K QHD (2560x1440)' },
-    UHD: { width: 3840, height: 2160, label: '4K UHD (3840x2160)' },
-    SQUARE: { width: 1080, height: 1080, label: 'Square (1080x1080)' }
+    UHD: { width: 3840, height: 2160, label: '4K UHD (3840x2160)' }
   }), [])
 
   // Initialize worker and load BUCC frame on mount
@@ -214,8 +213,7 @@ const ImageEditor = () => {
     const standardResolutions = [
       { width: 1920, height: 1080, label: 'Full HD (1920×1080)', key: 'FHD' },
       { width: 2560, height: 1440, label: '2K QHD (2560×1440)', key: '2K' },
-      { width: 3840, height: 2160, label: '4K UHD (3840×2160)', key: '4K' },
-      { width: 1080, height: 1080, label: 'Square (1080×1080)', key: 'SQ' }
+      { width: 3840, height: 2160, label: '4K UHD (3840×2160)', key: '4K' }
     ]
 
     // Prioritize user image quality - allow export up to the user's image resolution
@@ -702,10 +700,10 @@ const ImageEditor = () => {
     setProcessingProgress(0)
     
     try {
-      // Create high-quality export canvas
+      // Create high-quality export canvas with EXACT frame dimensions
       const exportCanvas = document.createElement('canvas')
-      exportCanvas.width = canvasSize.width
-      exportCanvas.height = canvasSize.height
+      exportCanvas.width = frameImage.width
+      exportCanvas.height = frameImage.height
       const exportCtx = exportCanvas.getContext('2d', { alpha: true })
       
       // Set optimal rendering settings
@@ -714,32 +712,11 @@ const ImageEditor = () => {
 
       setProcessingProgress(25)
 
-      // Calculate frame dimensions for export (preserve aspect ratio)
-      // Apply same 12% margin as preview to ensure consistency
-      const FRAME_MARGIN = 0.88 // 12% reduction for comfortable margin
-      let frameExportWidth = canvasSize.width * FRAME_MARGIN
-      let frameExportHeight = canvasSize.height * FRAME_MARGIN
-      let frameExportX = 0
-      let frameExportY = 0
-
-      if (frameImage) {
-        const frameAspectRatio = frameImage.width / frameImage.height
-        const canvasAspectRatio = canvasSize.width / canvasSize.height
-
-        if (frameAspectRatio > canvasAspectRatio) {
-          // Frame is wider - fit to canvas width with margin
-          frameExportWidth = canvasSize.width * FRAME_MARGIN
-          frameExportHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
-          frameExportX = (canvasSize.width - frameExportWidth) / 2
-          frameExportY = (canvasSize.height - frameExportHeight) / 2
-        } else {
-          // Frame is taller - fit to canvas height with margin
-          frameExportHeight = canvasSize.height * FRAME_MARGIN
-          frameExportWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
-          frameExportX = (canvasSize.width - frameExportWidth) / 2
-          frameExportY = (canvasSize.height - frameExportHeight) / 2
-        }
-      }
+      // Calculate frame dimensions for export - use exact frame size, no margins
+      const frameExportWidth = frameImage.width
+      const frameExportHeight = frameImage.height
+      const frameExportX = 0
+      const frameExportY = 0
 
       if (backgroundImage) {
         exportCtx.save()
@@ -753,15 +730,39 @@ const ImageEditor = () => {
         
         exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
         
-        // Use the user's current zoom setting directly - same as preview
-        // Don't auto-adjust scale - respect user's zoom preference
-        const scale = zoom;
-        const finalImgWidth = backgroundImage.width * scale;
-        const finalImgHeight = backgroundImage.height * scale;
+        // Calculate the actual preview frame area with margin (for scaling calculations)
+        const FRAME_MARGIN = 0.88 // Same margin as preview
+        let previewFrameWidth = canvasSize.width * FRAME_MARGIN
+        let previewFrameHeight = canvasSize.height * FRAME_MARGIN
         
-        // Center and apply position offset (same as drawCanvas)
-        const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
-        const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
+        if (frameImage) {
+          const frameAspectRatio = frameImage.width / frameImage.height
+          const canvasAspectRatio = canvasSize.width / canvasSize.height
+
+          if (frameAspectRatio > canvasAspectRatio) {
+            previewFrameWidth = canvasSize.width * FRAME_MARGIN
+            previewFrameHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
+          } else {
+            previewFrameHeight = canvasSize.height * FRAME_MARGIN
+            previewFrameWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
+          }
+        }
+        
+        // Scale the user's adjustments from preview frame to actual frame
+        const scaleToActualFrame = frameExportWidth / previewFrameWidth
+        
+        // Apply user's zoom and position, scaled to actual frame size
+        const actualScale = zoom * scaleToActualFrame
+        const finalImgWidth = backgroundImage.width * actualScale
+        const finalImgHeight = backgroundImage.height * actualScale
+        
+        // Scale position adjustments to actual frame size
+        const actualPositionX = position.x * scaleToActualFrame
+        const actualPositionY = position.y * scaleToActualFrame
+        
+        // Center and apply position offset relative to actual frame
+        const x = (frameExportWidth - finalImgWidth) / 2 + actualPositionX
+        const y = (frameExportHeight - finalImgHeight) / 2 + actualPositionY
         
         // Draw background with clipping applied
         exportCtx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
@@ -794,7 +795,6 @@ const ImageEditor = () => {
         URL.revokeObjectURL(url)
         
         setProcessingProgress(100)
-        showNotification(`Image downloaded successfully! (${canvasSize.width}x${canvasSize.height})`, 'success')
         setIsProcessing(false)
         setTimeout(() => setProcessingProgress(0), 1000)
       }, 'image/png', quality)
