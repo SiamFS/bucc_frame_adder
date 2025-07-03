@@ -110,6 +110,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    isolation: isolate; /* Create a new stacking context */
+    transform: translateZ(0); /* Force hardware acceleration */
+    will-change: transform; /* Hint for performance */
+    -webkit-backface-visibility: hidden; /* Prevent flickering */
+    backface-visibility: hidden;
+  }
+  
+  /* Prevent flickering during gestures */
+  .canvas-container.gesture-active {
+    transform: translateZ(0);
+    will-change: transform;
+    z-index: 2; /* Ensure active canvas is on top */
+  }
+  
+  .canvas-container.gesture-active canvas {
+    transform: translateZ(0);
+    will-change: transform, filter;
+    /* Temporarily disable CSS filters during gestures to prevent flicker */
+    filter: none !important;
   }
   
   .loading-spinner {
@@ -165,6 +184,53 @@
     .control-panel {
       @apply p-4 space-y-4;
     }
+    
+    .canvas-container {
+      min-height: 350px !important;
+      max-height: 65vh !important;
+      /* Force hardware acceleration on mobile */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform;
+      isolation: isolate;
+      z-index: 1;
+    }
+    
+    .canvas-container canvas {
+      /* Optimize canvas rendering on mobile */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform;
+      /* Prevent anti-aliasing during gestures for better performance */
+      image-rendering: auto;
+    }
+    
+    .canvas-container.gesture-active canvas {
+      /* Further optimize during active gestures */
+      image-rendering: optimizeSpeed;
+      will-change: transform, filter;
+    }
+    
+    /* Improve touch targets */
+    button:not([data-slider-thumb]) {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+}
+
+/* Disable canvas transitions on mobile to prevent flickering */
+@media (max-width: 768px) {
+  canvas {
+    transition: none !important;
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Prevent canvas container transitions on mobile */
+  .canvas-container {
+    transition: none !important;
+    transform: translateZ(0);
   }
 }
 

@@ -440,7 +440,7 @@ const ImageEditor = () => {
     // Calculate frame dimensions
     const frameDimensions = calculateFrameDimensions()
 
-    // Only proceed with drawing if there's a background image
+    // For mobile performance, create a single draw operation for both background and frame
     if (backgroundImage) {
       // First draw the background with clipping if needed
       ctx.save()
@@ -474,7 +474,8 @@ const ImageEditor = () => {
       
       // Only draw frame when both frame and background image exist, and showFrame is true
       if (frameImage && showFrame) {
-        // Use source-over to ensure frame is always drawn on top
+        // For mobile, use compositing to ensure frame is always on top
+        // This is critical for preventing flickering during gestures
         ctx.globalCompositeOperation = 'source-over';
         
         // Important: Draw frame with preserved aspect ratio after everything else
@@ -1044,7 +1045,7 @@ const ImageEditor = () => {
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className={`w-full h-full min-h-[350px] max-h-[60vh] lg:max-h-[95vh] object-contain transition-all duration-300 bg-slate-50 dark:bg-dark-bg-tertiary ${
+              className={`w-full h-full min-h-[350px] max-h-[60vh] lg:max-h-[95vh] object-contain bg-slate-50 dark:bg-dark-bg-tertiary ${
                 backgroundImage ? 'cursor-move' : ''
               } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleStart}
@@ -1054,7 +1055,14 @@ const ImageEditor = () => {
               onTouchStart={handleStart}
               onTouchMove={handleMove}
               onTouchEnd={handleEnd}
-              style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+              style={{ 
+                touchAction: 'none', 
+                WebkitUserSelect: 'none', 
+                userSelect: 'none',
+                transform: 'translateZ(0)',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden'
+              }}
             />
             
             {!backgroundImage && (
