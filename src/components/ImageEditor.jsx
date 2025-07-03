@@ -875,6 +875,14 @@ const ImageEditor = () => {
         setProcessingProgress(100);
         setIsProcessing(false);
         setTimeout(() => setProcessingProgress(0), 1000);
+        // Scroll to caption section after download, with offset for fixed navbar
+        const captionSection = document.getElementById('caption-section');
+        if (captionSection) {
+          captionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setTimeout(() => {
+            window.scrollBy({ top: -180, left: 0, behavior: 'smooth' }); // Increased offset for more space above
+          }, 400); // Wait for scrollIntoView to finish
+        }
       }, 'image/png', quality);
     } catch (error) {
       showNotification('Download failed: ' + error.message, 'error');
@@ -993,7 +1001,7 @@ const ImageEditor = () => {
 
       {/* Canvas Section - Preview (Center) */}
       <div className="lg:col-span-6 order-2">
-        <div className="glass-morphism rounded-2xl lg:rounded-3xl p-2 lg:p-3 shadow-xl h-full flex flex-col">
+        <div className="glass-morphism rounded-2xl lg:rounded-3xl p-2 lg:p-3 shadow-xl h-full flex flex-col bg-slate-200 dark:bg-dark-bg-secondary">
           <div className="flex items-center justify-between mb-2 py-1 px-1 lg:px-2">
             <div className="flex items-center gap-3">
               <h2 className="text-sm lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
@@ -1021,11 +1029,11 @@ const ImageEditor = () => {
           </div>
           
           <section 
-            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} ${isGestureActive ? 'gesture-active' : ''} flex-1 flex-grow rounded-xl lg:rounded-2xl overflow-hidden`}
+            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} ${isGestureActive ? 'gesture-active' : ''} flex-1 flex-grow rounded-xl lg:rounded-2xl overflow-hidden min-h-[400px] h-full bg-slate-100 dark:bg-dark-bg-tertiary`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            style={{ minHeight: '400px', height: 'calc(100vh - 220px)', isolation: 'isolate', transform: 'translateZ(0)', willChange: 'transform', zIndex: 1 }}
+            style={{ minHeight: '400px', height: '100%', isolation: 'isolate', transform: 'translateZ(0)', willChange: 'transform', zIndex: 1 }}
             aria-label="Image preview and editing area"
           >
             <canvas
@@ -1051,13 +1059,14 @@ const ImageEditor = () => {
                 WebkitBackfaceVisibility: 'hidden',
                 willChange: 'transform',
                 isolation: 'isolate',
-                zIndex: 2
+                zIndex: 2,
+                background: 'transparent',
+                position: 'relative',
               }}
             />
-            
             {!backgroundImage && (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-dark-text-secondary">
-                <div className="text-center animate-pulse-gentle">
+              <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-dark-text-secondary bg-transparent pointer-events-none">
+                <div className="text-center animate-bounce-gentle">
                   <PhotoIcon className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 opacity-40" />
                   <p className="text-lg lg:text-xl font-medium mb-2">Upload your background image</p>
                   <p className="text-sm lg:text-base text-slate-500 dark:text-slate-400">BUCC frame will be applied automatically</p>
