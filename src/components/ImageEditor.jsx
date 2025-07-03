@@ -440,47 +440,34 @@ const ImageEditor = () => {
     // Calculate frame dimensions
     const frameDimensions = calculateFrameDimensions()
 
-    // For mobile performance, create a single draw operation for both background and frame
     if (backgroundImage) {
-      // First draw the background with clipping if needed
       ctx.save()
-      
-      // Create clipping path to match frame area if frame exists
+      // Always clip to the frame area if frame exists
       if (frameImage) {
         ctx.beginPath()
         ctx.rect(frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
         ctx.clip()
       }
-      
-      // Apply background filters when not actively gesturing
+      // Apply filters only when not gesturing
       const isActivelyGesturing = isDragging || isPinching || isGestureActive
       if (!isActivelyGesturing) {
         ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
       }
-      
       // Use the user's current zoom setting directly
       const scale = zoom;
       const finalImgWidth = backgroundImage.width * scale;
       const finalImgHeight = backgroundImage.height * scale;
-      
       // Center and apply position offset
       const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
       const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
-      
-      // Draw background with clipping applied
+      // Draw background with clipping always applied
       ctx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
-      
       ctx.restore()
-      
-      // Only draw frame when both frame and background image exist, and showFrame is true
-      if (frameImage && showFrame) {
-        // For mobile, use compositing to ensure frame is always on top
-        // This is critical for preventing flickering during gestures
-        ctx.globalCompositeOperation = 'source-over';
-        
-        // Important: Draw frame with preserved aspect ratio after everything else
-        ctx.drawImage(frameImage, frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
-      }
+    }
+    // Always draw frame last, on top, but only if backgroundImage exists
+    if (backgroundImage && frameImage && showFrame) {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(frameImage, frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
     }
   }, [backgroundImage, frameImage, showFrame, calculateFrameDimensions, isDragging, isPinching, isGestureActive, brightness, contrast, zoom, position, canvasSize])
 
@@ -880,7 +867,7 @@ const ImageEditor = () => {
         if (captionSection) {
           captionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
           setTimeout(() => {
-            window.scrollBy({ top: -180, left: 0, behavior: 'smooth' }); // Increased offset for more space above
+            window.scrollBy({ top: -140, left: 0, behavior: 'smooth' }); // Increased offset for more space above
           }, 400); // Wait for scrollIntoView to finish
         }
       }, 'image/png', quality);
@@ -1265,7 +1252,7 @@ const ImageEditor = () => {
                 <span>Reset & Auto-fit</span>
               </button>
               
-              {/* Image Resolution Button - Only show when both images are loaded */}
+              {/* Image Resolution Button - Only show when backgroundImage is loaded */}
               {backgroundImage && frameImage && (
                 <button
                   onClick={() => setShowResolutionSelector(!showResolutionSelector)}
