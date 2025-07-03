@@ -89,8 +89,7 @@ const ImageEditor = () => {
     HD: { width: 1920, height: 1080, label: 'Full HD (1920x1080)' },
     FHD: { width: 2560, height: 1440, label: '2K QHD (2560x1440)' },
     UHD: { width: 3840, height: 2160, label: '4K UHD (3840x2160)' },
-    SQUARE: { width: 1080, height: 1080, label: 'Square (1080x1080)' },
-    PORTRAIT: { width: 1080, height: 1350, label: 'Portrait (1080x1350)' }
+    SQUARE: { width: 1080, height: 1080, label: 'Square (1080x1080)' }
   }), [])
 
   // Initialize worker and load BUCC frame on mount
@@ -216,8 +215,7 @@ const ImageEditor = () => {
       { width: 1920, height: 1080, label: 'Full HD (1920×1080)', key: 'FHD' },
       { width: 2560, height: 1440, label: '2K QHD (2560×1440)', key: '2K' },
       { width: 3840, height: 2160, label: '4K UHD (3840×2160)', key: '4K' },
-      { width: 1080, height: 1080, label: 'Square (1080×1080)', key: 'SQ' },
-      { width: 1080, height: 1350, label: 'Portrait (1080×1350)', key: 'PT' }
+      { width: 1080, height: 1080, label: 'Square (1080×1080)', key: 'SQ' }
     ]
 
     // Prioritize user image quality - allow export up to the user's image resolution
@@ -264,15 +262,14 @@ const ImageEditor = () => {
 
   // Handle resolution selection
   const handleResolutionSelect = useCallback((resolution) => {
-    setCanvasSize({ width: resolution.width, height: resolution.height })
-    // Don't close the selector - let user choose multiple resolutions
-    showNotification(`Resolution changed to ${resolution.label}`, 'success')
+    // Only update canvas size if it's actually different
+    if (canvasSize.width !== resolution.width || canvasSize.height !== resolution.height) {
+      setCanvasSize({ width: resolution.width, height: resolution.height })
+    }
     
-    // Auto-fit the image to the new canvas size
-    setTimeout(() => {
-      autoFitToFrame()
-    }, 100)
-  }, [showNotification, autoFitToFrame])
+    // Never reset position, zoom, brightness, contrast, or any other user adjustments
+    // All user settings are preserved regardless of resolution selection
+  }, [canvasSize.width, canvasSize.height])
 
   const handleBackgroundUpload = useCallback(async (event) => {
     const file = event.target.files?.[0]
@@ -283,6 +280,19 @@ const ImageEditor = () => {
       const img = await validateAndProcessFile(file, 'background')
       setBackgroundImage(img)
       setPosition({ x: 0, y: 0 }) // Reset position
+      
+      // Auto-scroll to preview on mobile after image upload
+      setTimeout(() => {
+        if (window.innerWidth < 1024) { // lg breakpoint
+          const previewSection = document.querySelector('.canvas-container')
+          if (previewSection) {
+            previewSection.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            })
+          }
+        }
+      }, 500) // Small delay to ensure image is loaded
     } catch (error) {
       showNotification(error.message, 'error')
     } finally {
@@ -321,6 +331,19 @@ const ImageEditor = () => {
       const img = await validateAndProcessFile(imageFile, 'background')
       setBackgroundImage(img)
       setPosition({ x: 0, y: 0 })
+      
+      // Auto-scroll to preview on mobile after drag & drop
+      setTimeout(() => {
+        if (window.innerWidth < 1024) { // lg breakpoint
+          const previewSection = document.querySelector('.canvas-container')
+          if (previewSection) {
+            previewSection.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            })
+          }
+        }
+      }, 500) // Small delay to ensure image is loaded
     } catch (error) {
       showNotification(error.message, 'error')
     } finally {
@@ -387,27 +410,9 @@ const ImageEditor = () => {
       // Apply filters using CSS filters for better performance
       ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
       
-      // Calculate scaling to ensure the image fills the entire frame area
-      let scale = zoom;
-      const imgWidth = backgroundImage.width * scale;
-      const imgHeight = backgroundImage.height * scale;
-      
-      // Ensure image fills the frame completely
-      if (frameImage) {
-        const imgAspect = backgroundImage.width / backgroundImage.height;
-        const frameAspect = frameDisplayWidth / frameDisplayHeight;
-        
-        // Adjust scale to ensure the image always covers the entire frame area
-        if (imgAspect > frameAspect) {
-          const minScale = frameDisplayHeight / backgroundImage.height;
-          scale = Math.max(scale, minScale);
-        } else {
-          const minScale = frameDisplayWidth / backgroundImage.width;
-          scale = Math.max(scale, minScale);
-        }
-      }
-      
-      // Recalculate dimensions with potentially adjusted scale
+      // Use the user's current zoom setting directly
+      // Don't auto-adjust scale - respect user's zoom preference
+      const scale = zoom;
       const finalImgWidth = backgroundImage.width * scale;
       const finalImgHeight = backgroundImage.height * scale;
       
@@ -416,7 +421,7 @@ const ImageEditor = () => {
       const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
       
       // Draw background with clipping applied
-      ctx.drawImage(backgroundImage, x, y, imgWidth, imgHeight)
+      ctx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
       
       // Restore context
       ctx.restore()
@@ -428,13 +433,14 @@ const ImageEditor = () => {
     }
   }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize, showFrame])
 
-  // Auto-fit when both images are loaded
+  // Auto-fit when both images are loaded (only on initial load)
   useEffect(() => {
     if (backgroundImage && frameImage) {
-      // Auto-fit the background image to the frame
+      // Only auto-fit if this is the first time both images are loaded
+      // Don't auto-fit on subsequent canvas size changes
       autoFitToFrame()
     }
-  }, [backgroundImage, frameImage, autoFitToFrame])
+  }, [backgroundImage, frameImage]) // Removed autoFitToFrame from dependencies
 
   // Optimized canvas updates with requestAnimationFrame
   useEffect(() => {
@@ -747,25 +753,9 @@ const ImageEditor = () => {
         
         exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
         
-        // Use the same scaling logic as in drawCanvas to ensure consistency
-        let scale = zoom;
-        
-        // Ensure image fills the frame completely (same logic as drawCanvas)
-        if (frameImage) {
-          const imgAspect = backgroundImage.width / backgroundImage.height;
-          const frameAspect = frameExportWidth / frameExportHeight;
-          
-          // Adjust scale to ensure the image always covers the entire frame area
-          if (imgAspect > frameAspect) {
-            const minScale = frameExportHeight / backgroundImage.height;
-            scale = Math.max(scale, minScale);
-          } else {
-            const minScale = frameExportWidth / backgroundImage.width;
-            scale = Math.max(scale, minScale);
-          }
-        }
-        
-        // Recalculate dimensions with potentially adjusted scale
+        // Use the user's current zoom setting directly - same as preview
+        // Don't auto-adjust scale - respect user's zoom preference
+        const scale = zoom;
         const finalImgWidth = backgroundImage.width * scale;
         const finalImgHeight = backgroundImage.height * scale;
         
@@ -901,7 +891,24 @@ const ImageEditor = () => {
       <div className="lg:col-span-6 order-2">
         <div className="glass-morphism rounded-xl lg:rounded-2xl p-1 lg:p-2 shadow-lg h-full flex flex-col">
           <div className="flex items-center justify-between mb-1 py-1 px-1 lg:px-0">
-            <h2 className="text-sm lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
+              {/* Interactive Controls - Beside Preview Title */}
+              {backgroundImage && (
+                <div className="bg-black/5 dark:bg-white/5 backdrop-blur-sm rounded-lg px-2 py-1 lg:px-3 lg:py-1 text-xs lg:text-sm border border-black/5 dark:border-white/5">
+                  <div className="flex items-center gap-2 lg:gap-3 text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1">
+                      <span className="text-blue-400">•</span>
+                      <span>Drag</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-green-400">•</span>
+                      <span>Zoom</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-1 lg:gap-2 text-xs text-slate-600 dark:text-dark-text-secondary">
               <span className="status-indicator text-xs">
                 {canvasSize.width} × {canvasSize.height}
