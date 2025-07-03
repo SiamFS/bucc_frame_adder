@@ -17,6 +17,7 @@ import {
   CloudArrowUpIcon
 } from '@heroicons/react/24/outline'
 import BuccFrame from '../assets/bucc_frame.png'
+import CustomSlider from './CustomSlider'
 
 // Performance optimization: Web Worker for heavy image processing
 const createImageWorker = () => {
@@ -1095,61 +1096,40 @@ const ImageEditor = () => {
             )}
             
             {/* Zoom Control */}
-            <div className="space-y-1 lg:space-y-2">
-              <label className="flex items-center gap-1 lg:gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
-                <MagnifyingGlassIcon className="w-3 h-3 lg:w-4 lg:h-4" />
-                Zoom: {zoom.toFixed(1)}x
-              </label>
-              <input
-                type="range"
-                min="0.1"
-                max="10"
-                step="0.1"
-                value={zoom}
-                onChange={(e) => {
-                  const newZoom = parseFloat(e.target.value)
-                  setZoom(newZoom)
-                }}
-                className="w-full slider h-2 lg:h-3"
-              />
-              <div className="flex justify-between text-xs text-slate-500 dark:text-dark-text-tertiary">
-                <span>0.1x</span>
-                <span>1x</span>
-                <span>10x</span>
-              </div>
-            </div>
+            <CustomSlider
+              min={0.1}
+              max={10}
+              step={0.1}
+              value={zoom}
+              onChange={setZoom}
+              label="Zoom"
+              icon={<MagnifyingGlassIcon className="w-3 h-3 lg:w-4 lg:h-4" />}
+              valueLabel={`${zoom.toFixed(1)}x`}
+            />
 
             {/* Brightness Control */}
-            <div className="space-y-1 lg:space-y-2">
-              <label className="flex items-center gap-1 lg:gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
-                <SunIcon className="w-3 h-3 lg:w-4 lg:h-4" />
-                Brightness: {brightness}%
-              </label>
-              <input
-                type="range"
-                min="50"
-                max="150"
-                value={brightness}
-                onChange={(e) => setBrightness(parseInt(e.target.value))}
-                className="w-full slider h-2 lg:h-3"
-              />
-            </div>
+            <CustomSlider
+              min={50}
+              max={150}
+              step={1}
+              value={brightness}
+              onChange={setBrightness}
+              label="Brightness"
+              icon={<SunIcon className="w-3 h-3 lg:w-4 lg:h-4" />}
+              valueLabel={`${brightness}%`}
+            />
 
             {/* Contrast Control */}
-            <div className="space-y-1 lg:space-y-2">
-              <label className="flex items-center gap-1 lg:gap-2 text-xs lg:text-sm font-semibold text-slate-700 dark:text-dark-text-primary">
-                <SparklesIcon className="w-3 h-3 lg:w-4 lg:h-4" />
-                Contrast: {contrast}%
-              </label>
-              <input
-                type="range"
-                min="50"
-                max="150"
-                value={contrast}
-                onChange={(e) => setContrast(parseInt(e.target.value))}
-                className="w-full slider h-2 lg:h-3"
-              />
-            </div>
+            <CustomSlider
+              min={50}
+              max={150}
+              step={1}
+              value={contrast}
+              onChange={setContrast}
+              label="Contrast"
+              icon={<SparklesIcon className="w-3 h-3 lg:w-4 lg:h-4" />}
+              valueLabel={`${contrast}%`}
+            />
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-2 pt-3">
