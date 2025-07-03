@@ -142,6 +142,19 @@
     -webkit-backdrop-filter: blur(8px);
   }
   
+  /* Prevent flickering during gestures */
+  .canvas-container.gesture-active {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  .canvas-container.gesture-active canvas {
+    transform: translateZ(0);
+    will-change: transform, filter;
+    /* Temporarily disable CSS filters during gestures to prevent flicker */
+    filter: none !important;
+  }
+  
   .loading-spinner {
     @apply inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full;
     animation: spin 1s linear infinite;
@@ -209,6 +222,24 @@
     .canvas-container {
       min-height: 350px !important;
       max-height: 65vh !important;
+      /* Force hardware acceleration on mobile */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform;
+    }
+    
+    .canvas-container canvas {
+      /* Optimize canvas rendering on mobile */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform;
+      /* Disable anti-aliasing during gestures for better performance */
+      image-rendering: optimizeSpeed;
+    }
+    
+    .canvas-container.gesture-active canvas {
+      /* Further optimize during active gestures */
+      image-rendering: pixelated;
     }
     
     /* Improve touch targets - exclude slider thumbs */
@@ -407,6 +438,19 @@
   .control-panel,
   .upload-area {
     transition: none !important;
+  }
+  
+  /* Disable all canvas transitions on mobile to prevent gesture flicker */
+  canvas {
+    transition: none !important;
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Prevent canvas container transitions on mobile */
+  .canvas-container {
+    transition: none !important;
+    transform: translateZ(0);
   }
 }
 

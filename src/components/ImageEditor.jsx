@@ -63,6 +63,7 @@ const ImageEditor = () => {
   const [notification, setNotification] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [showResolutionSelector, setShowResolutionSelector] = useState(false)
+  const [isGestureActive, setIsGestureActive] = useState(false) // Track active gestures for flicker prevention
   
   // Enhanced gesture state for pinch-to-zoom and smooth panning
   const [isPinching, setIsPinching] = useState(false)
@@ -215,20 +216,8 @@ const ImageEditor = () => {
     setPosition({ x: 0, y: 0 }) // Center the image
   }, [backgroundImage, frameImage, canvasSize])
 
-  // Calculate valid resolution options - based on frame's aspect ratio
-  const getValidResolutions = useCallback(() => {
-    if (!backgroundImage || !frameImage) return []
-
-    // Get actual image dimensions
-    const bgWidth = backgroundImage.width
-    const bgHeight = backgroundImage.height
-    const frameWidth = frameImage.width
-    const frameHeight = frameImage.height
-    
-    // Calculate frame's aspect ratio to maintain consistency
-    const frameAspectRatio = frameWidth / frameHeight
-
-    // Create resolutions based on frame's aspect ratio
+  // Helper function to generate aspect ratio resolutions
+  const generateAspectRatioResolutions = useCallback((frameAspectRatio) => {
     const baseResolutions = [
       { size: 1080, label: 'HD', key: 'HD' },
       { size: 1440, label: '2K', key: '2K' },
@@ -237,16 +226,13 @@ const ImageEditor = () => {
       { size: 2880, label: '5K', key: '5K' }
     ]
 
-    // Generate resolutions maintaining frame's aspect ratio
-    const aspectRatioResolutions = baseResolutions.map(base => {
+    return baseResolutions.map(base => {
       let width, height
       
       if (frameAspectRatio >= 1) {
-        // Frame is wider or square
         width = base.size
         height = Math.round(base.size / frameAspectRatio)
       } else {
-        // Frame is taller
         height = base.size
         width = Math.round(base.size * frameAspectRatio)
       }
@@ -258,15 +244,25 @@ const ImageEditor = () => {
         key: base.key
       }
     })
+  }, [])
 
-    // Filter based on background image quality - don't create fake resolutions
+  // Calculate valid resolution options - based on frame's aspect ratio
+  const getValidResolutions = useCallback(() => {
+    if (!backgroundImage || !frameImage) return []
+
+    const bgWidth = backgroundImage.width
+    const bgHeight = backgroundImage.height
+    const frameWidth = frameImage.width
+    const frameHeight = frameImage.height
+    const frameAspectRatio = frameWidth / frameHeight
     const maxResolution = Math.max(bgWidth, bgHeight)
-    
+
+    // Generate and filter resolutions
+    const aspectRatioResolutions = generateAspectRatioResolutions(frameAspectRatio)
     const validResolutions = aspectRatioResolutions.filter(res => {
       const resMaxDimension = Math.max(res.width, res.height)
       return resMaxDimension <= maxResolution
     }).map(res => {
-      // Add upscaling indicator if frame needs to be upscaled
       const frameNeedsUpscaling = res.width > frameWidth || res.height > frameHeight
       return {
         ...res,
@@ -275,7 +271,7 @@ const ImageEditor = () => {
       }
     })
 
-    // Always include the original frame size if it fits within background quality
+    // Add original frame size if valid
     const originalFrameMaxDim = Math.max(frameWidth, frameHeight)
     if (originalFrameMaxDim <= maxResolution) {
       const originalRes = {
@@ -295,7 +291,7 @@ const ImageEditor = () => {
       }
     }
 
-    // Include current canvas size if it's different and valid
+    // Add current canvas size if valid
     const currentMaxDim = Math.max(canvasSize.width, canvasSize.height)
     if (currentMaxDim <= maxResolution) {
       const currentRes = { 
@@ -315,9 +311,8 @@ const ImageEditor = () => {
       }
     }
 
-    // Sort by total pixels (descending)
     return validResolutions.sort((a, b) => (b.width * b.height) - (a.width * a.height))
-  }, [backgroundImage, frameImage, canvasSize])
+  }, [backgroundImage, frameImage, canvasSize, generateAspectRatioResolutions])
 
   // Handle resolution selection
   const handleResolutionSelect = useCallback((resolution) => {
@@ -330,15 +325,15 @@ const ImageEditor = () => {
     // All user settings are preserved regardless of resolution selection
   }, [canvasSize.width, canvasSize.height])
 
-  const handleBackgroundUpload = useCallback(async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
+  // Helper function to handle file upload processing
+  const processUploadedFile = useCallback(async (file, resetPosition = true) => {
     setIsProcessing(true)
     try {
       const img = await validateAndProcessFile(file, 'background')
       setBackgroundImage(img)
-      setPosition({ x: 0, y: 0 }) // Reset position
+      if (resetPosition) {
+        setPosition({ x: 0, y: 0 }) // Reset position
+      }
       
       // Auto-scroll to preview on mobile after image upload
       setTimeout(() => {
@@ -358,6 +353,12 @@ const ImageEditor = () => {
       setIsProcessing(false)
     }
   }, [validateAndProcessFile, showNotification])
+
+  const handleBackgroundUpload = useCallback(async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    await processUploadedFile(file)
+  }, [processUploadedFile])
 
   // Handle drag and drop functionality
   const handleDragOver = useCallback((e) => {
@@ -385,32 +386,73 @@ const ImageEditor = () => {
       return
     }
 
-    setIsProcessing(true)
-    try {
-      const img = await validateAndProcessFile(imageFile, 'background')
-      setBackgroundImage(img)
-      setPosition({ x: 0, y: 0 })
-      
-      // Auto-scroll to preview on mobile after drag & drop
-      setTimeout(() => {
-        if (window.innerWidth < 1024) { // lg breakpoint
-          const previewSection = document.querySelector('.canvas-container')
-          if (previewSection) {
-            previewSection.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
-            })
-          }
-        }
-      }, 500) // Small delay to ensure image is loaded
-    } catch (error) {
-      showNotification(error.message, 'error')
-    } finally {
-      setIsProcessing(false)
-    }
-  }, [validateAndProcessFile, showNotification])
+    await processUploadedFile(imageFile)
+  }, [processUploadedFile, showNotification])
 
-  // Enhanced canvas drawing with performance optimization
+  // Helper function to calculate frame dimensions for drawing
+  const calculateFrameDimensions = useCallback(() => {
+    const FRAME_MARGIN = 0.88 // 12% reduction for comfortable margin
+    let frameDisplayWidth = canvasSize.width * FRAME_MARGIN
+    let frameDisplayHeight = canvasSize.height * FRAME_MARGIN
+    let frameX = 0
+    let frameY = 0
+
+    if (frameImage) {
+      const frameAspectRatio = frameImage.width / frameImage.height
+      const canvasAspectRatio = canvasSize.width / canvasSize.height
+
+      if (frameAspectRatio > canvasAspectRatio) {
+        frameDisplayWidth = canvasSize.width * FRAME_MARGIN
+        frameDisplayHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
+        frameX = (canvasSize.width - frameDisplayWidth) / 2
+        frameY = (canvasSize.height - frameDisplayHeight) / 2
+      } else {
+        frameDisplayHeight = canvasSize.height * FRAME_MARGIN
+        frameDisplayWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
+        frameX = (canvasSize.width - frameDisplayWidth) / 2
+        frameY = (canvasSize.height - frameDisplayHeight) / 2
+      }
+    }
+
+    return { frameDisplayWidth, frameDisplayHeight, frameX, frameY }
+  }, [frameImage, canvasSize])
+
+  // Helper function to draw background image
+  const drawBackgroundImage = useCallback((ctx, frameDimensions) => {
+    if (!backgroundImage) return
+
+    ctx.save()
+    
+    // Create clipping path to match frame area if frame exists
+    if (frameImage) {
+      ctx.beginPath()
+      ctx.rect(frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
+      ctx.clip()
+    }
+    
+    // Apply filters using CSS filters for better performance
+    // Only apply filters when not actively gesturing to prevent mobile flicker
+    const isActivelyGesturing = isDragging || isPinching
+    if (!isActivelyGesturing) {
+      ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
+    }
+    
+    // Use the user's current zoom setting directly
+    const scale = zoom;
+    const finalImgWidth = backgroundImage.width * scale;
+    const finalImgHeight = backgroundImage.height * scale;
+    
+    // Center and apply position offset
+    const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
+    const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
+    
+    // Draw background with clipping applied
+    ctx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
+    
+    ctx.restore()
+  }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize, isDragging, isPinching])
+
+  // Enhanced canvas drawing with performance optimization and flicker prevention
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -428,69 +470,17 @@ const ImageEditor = () => {
     ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = 'high'
 
-    // Calculate frame display dimensions (preserve aspect ratio)
-    // Apply 12% margin to prevent frame from touching preview boundaries
-    const FRAME_MARGIN = 0.88 // 12% reduction for comfortable margin
-    let frameDisplayWidth = canvasSize.width * FRAME_MARGIN
-    let frameDisplayHeight = canvasSize.height * FRAME_MARGIN
-    let frameX = 0
-    let frameY = 0
+    // Calculate frame dimensions
+    const frameDimensions = calculateFrameDimensions()
 
-    if (frameImage) {
-      const frameAspectRatio = frameImage.width / frameImage.height
-      const canvasAspectRatio = canvasSize.width / canvasSize.height
-
-      if (frameAspectRatio > canvasAspectRatio) {
-        // Frame is wider - fit to canvas width with margin
-        frameDisplayWidth = canvasSize.width * FRAME_MARGIN
-        frameDisplayHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
-        frameX = (canvasSize.width - frameDisplayWidth) / 2
-        frameY = (canvasSize.height - frameDisplayHeight) / 2
-      } else {
-        // Frame is taller - fit to canvas height with margin
-        frameDisplayHeight = canvasSize.height * FRAME_MARGIN
-        frameDisplayWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
-        frameX = (canvasSize.width - frameDisplayWidth) / 2
-        frameY = (canvasSize.height - frameDisplayHeight) / 2
-      }
-    }
-
-    if (backgroundImage) {
-      // Save context for isolated transformations
-      ctx.save()
-      
-      // Create clipping path to match frame area if frame exists
-      if (frameImage) {
-        ctx.beginPath()
-        ctx.rect(frameX, frameY, frameDisplayWidth, frameDisplayHeight)
-        ctx.clip()
-      }
-      
-      // Apply filters using CSS filters for better performance
-      ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
-      
-      // Use the user's current zoom setting directly
-      // Don't auto-adjust scale - respect user's zoom preference
-      const scale = zoom;
-      const finalImgWidth = backgroundImage.width * scale;
-      const finalImgHeight = backgroundImage.height * scale;
-      
-      // Center and apply position offset
-      const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
-      const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
-      
-      // Draw background with clipping applied
-      ctx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
-      
-      // Restore context
-      ctx.restore()
-    }
+    // Draw background image
+    drawBackgroundImage(ctx, frameDimensions)
 
     if (frameImage && showFrame && backgroundImage) {
       // Draw frame with preserved aspect ratio (only when background image is present)
-      ctx.drawImage(frameImage, frameX, frameY, frameDisplayWidth, frameDisplayHeight)
+      ctx.drawImage(frameImage, frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
     }
-  }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize, showFrame])
+  }, [backgroundImage, frameImage, showFrame, calculateFrameDimensions, drawBackgroundImage])
 
   // Auto-fit when both images are loaded (only on initial load)
   useEffect(() => {
@@ -593,7 +583,7 @@ const ImageEditor = () => {
     }
   }, [isInertiaActive, applyInertia])
 
-  // Enhanced gesture start handler with pinch detection
+  // Enhanced gesture start handler with pinch detection and flicker prevention
   const handleStart = useCallback((e) => {
     if (!backgroundImage) return
     e.preventDefault()
@@ -603,6 +593,9 @@ const ImageEditor = () => {
     if (inertiaAnimationRef.current) {
       cancelAnimationFrame(inertiaAnimationRef.current)
     }
+
+    // Set gesture state for performance optimization
+    setIsGestureActive(true)
 
     const currentTime = Date.now()
     touchStartTimeRef.current = currentTime
@@ -640,6 +633,51 @@ const ImageEditor = () => {
     velocityRef.current = { x: 0, y: 0 }
   }, [backgroundImage, position, zoom, getEventPosition, getTouchDistance])
 
+  // Helper function to handle pinch gesture logic
+  const handlePinchGesture = useCallback((e) => {
+    const distance = getTouchDistance(e.touches[0], e.touches[1])
+    if (initialPinchDistance > 0) {
+      const scale = distance / initialPinchDistance
+      const newZoom = Math.max(0.1, Math.min(10, initialZoom * scale))
+      
+      // Calculate zoom center point for natural zooming
+      const zoomCenter = gestureStartRef.current.center
+      
+      // Adjust position based on zoom center
+      const zoomRatio = newZoom / gestureStartRef.current.zoom
+      const deltaX = (zoomCenter.x - canvasSize.width / 2) * (1 - zoomRatio)
+      const deltaY = (zoomCenter.y - canvasSize.height / 2) * (1 - zoomRatio)
+      
+      setZoom(newZoom)
+      setPosition({
+        x: gestureStartRef.current.position.x + deltaX,
+        y: gestureStartRef.current.position.y + deltaY
+      })
+    }
+  }, [getTouchDistance, initialPinchDistance, initialZoom, canvasSize])
+
+  // Helper function to handle drag gesture logic
+  const handleDragGesture = useCallback((pos, currentTime) => {
+    const newPosition = {
+      x: pos.x - dragStart.x,
+      y: pos.y - dragStart.y
+    }
+    
+    // Calculate velocity for inertia
+    const deltaTime = Math.max(1, currentTime - touchStartTimeRef.current)
+    const deltaX = pos.x - lastPositionRef.current.x
+    const deltaY = pos.y - lastPositionRef.current.y
+    
+    velocityRef.current = {
+      x: deltaX / deltaTime * 16, // Normalize to 60fps
+      y: deltaY / deltaTime * 16
+    }
+    
+    // Apply position with full freedom (no constraints)
+    setPosition(newPosition)
+    lastPositionRef.current = pos
+  }, [dragStart])
+
   // Enhanced move handler with pinch-to-zoom and smooth panning
   const handleMove = useCallback((e) => {
     if (!backgroundImage) return
@@ -650,52 +688,17 @@ const ImageEditor = () => {
 
     // Handle pinch zoom
     if (e.touches && e.touches.length === 2 && isPinching) {
-      const distance = getTouchDistance(e.touches[0], e.touches[1])
-      if (initialPinchDistance > 0) {
-        const scale = distance / initialPinchDistance
-        const newZoom = Math.max(0.1, Math.min(10, initialZoom * scale))
-        
-        // Calculate zoom center point for natural zooming
-        const zoomCenter = gestureStartRef.current.center
-        
-        // Adjust position based on zoom center
-        const zoomRatio = newZoom / gestureStartRef.current.zoom
-        const deltaX = (zoomCenter.x - canvasSize.width / 2) * (1 - zoomRatio)
-        const deltaY = (zoomCenter.y - canvasSize.height / 2) * (1 - zoomRatio)
-        
-        setZoom(newZoom)
-        setPosition({
-          x: gestureStartRef.current.position.x + deltaX,
-          y: gestureStartRef.current.position.y + deltaY
-        })
-      }
+      handlePinchGesture(e)
       return
     }
 
     // Handle single touch/mouse drag with full freedom
     if (isDragging && !isPinching) {
-      const newPosition = {
-        x: pos.x - dragStart.x,
-        y: pos.y - dragStart.y
-      }
-      
-      // Calculate velocity for inertia
-      const deltaTime = Math.max(1, currentTime - touchStartTimeRef.current)
-      const deltaX = pos.x - lastPositionRef.current.x
-      const deltaY = pos.y - lastPositionRef.current.y
-      
-      velocityRef.current = {
-        x: deltaX / deltaTime * 16, // Normalize to 60fps
-        y: deltaY / deltaTime * 16
-      }
-      
-      // Apply position with full freedom (no constraints)
-      setPosition(newPosition)
-      lastPositionRef.current = pos
+      handleDragGesture(pos, currentTime)
     }
-  }, [isDragging, isPinching, backgroundImage, dragStart, getEventPosition, getTouchDistance, initialPinchDistance, initialZoom, canvasSize])
+  }, [isDragging, isPinching, backgroundImage, getEventPosition, handlePinchGesture, handleDragGesture])
 
-  // Enhanced end handler with inertia
+  // Enhanced end handler with inertia and gesture state cleanup
   const handleEnd = useCallback((e) => {
     e.preventDefault()
     
@@ -717,6 +720,11 @@ const ImageEditor = () => {
     setIsDragging(false)
     setIsPinching(false)
     setInitialPinchDistance(0)
+    
+    // Clear gesture state after a short delay to ensure smooth transition back to filters
+    setTimeout(() => {
+      setIsGestureActive(false)
+    }, 100)
   }, [isDragging])
 
   // Enhanced wheel zoom with smooth scaling
@@ -750,6 +758,85 @@ const ImageEditor = () => {
     }))
   }, [backgroundImage, zoom, position, canvasSize])
 
+  // Helper function to create export canvas with frame dimensions
+  const createExportCanvas = useCallback(() => {
+    const exportCanvas = document.createElement('canvas')
+    exportCanvas.width = canvasSize.width
+    exportCanvas.height = canvasSize.height
+    const exportCtx = exportCanvas.getContext('2d', { alpha: true })
+    
+    // Set optimal rendering settings
+    exportCtx.imageSmoothingEnabled = true
+    exportCtx.imageSmoothingQuality = 'high'
+
+    // Calculate frame dimensions for export
+    const FRAME_MARGIN = 0.88 // Same margin as preview
+    let frameExportWidth = canvasSize.width * FRAME_MARGIN
+    let frameExportHeight = canvasSize.height * FRAME_MARGIN
+    let frameExportX = 0
+    let frameExportY = 0
+
+    if (frameImage) {
+      const frameAspectRatio = frameImage.width / frameImage.height
+      const canvasAspectRatio = canvasSize.width / canvasSize.height
+
+      if (frameAspectRatio > canvasAspectRatio) {
+        frameExportWidth = canvasSize.width * FRAME_MARGIN
+        frameExportHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
+        frameExportX = (canvasSize.width - frameExportWidth) / 2
+        frameExportY = (canvasSize.height - frameExportHeight) / 2
+      } else {
+        frameExportHeight = canvasSize.height * FRAME_MARGIN
+        frameExportWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
+        frameExportX = (canvasSize.width - frameExportWidth) / 2
+        frameExportY = (canvasSize.height - frameExportHeight) / 2
+      }
+    }
+
+    return { 
+      exportCanvas, 
+      exportCtx, 
+      frameExportWidth, 
+      frameExportHeight, 
+      frameExportX, 
+      frameExportY 
+    }
+  }, [canvasSize, frameImage])
+
+  // Helper function to draw export content
+  const drawExportContent = useCallback((exportCtx, frameDimensions) => {
+    if (backgroundImage) {
+      exportCtx.save()
+      
+      // Create clipping path for frame area in export
+      if (frameImage) {
+        exportCtx.beginPath()
+        exportCtx.rect(frameDimensions.frameExportX, frameDimensions.frameExportY, frameDimensions.frameExportWidth, frameDimensions.frameExportHeight)
+        exportCtx.clip()
+      }
+      
+      exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
+      
+      // Use the user's current zoom and position settings directly
+      const scale = zoom
+      const finalImgWidth = backgroundImage.width * scale
+      const finalImgHeight = backgroundImage.height * scale
+      
+      // Center and apply position offset
+      const x = (canvasSize.width - finalImgWidth) / 2 + position.x
+      const y = (canvasSize.height - finalImgHeight) / 2 + position.y
+      
+      // Draw background with clipping applied
+      exportCtx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
+      exportCtx.restore()
+    }
+
+    if (frameImage && showFrame && backgroundImage) {
+      // Draw frame at the export resolution
+      exportCtx.drawImage(frameImage, frameDimensions.frameExportX, frameDimensions.frameExportY, frameDimensions.frameExportWidth, frameDimensions.frameExportHeight)
+    }
+  }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize, showFrame])
+
   // Enhanced download with quality options
   const handleDownload = useCallback(async (quality = 1.0) => {
     if (!backgroundImage && !frameImage) {
@@ -761,78 +848,15 @@ const ImageEditor = () => {
     setProcessingProgress(0)
     
     try {
-      // Create high-quality export canvas with SELECTED canvas resolution (not frame's original size)
-      const exportCanvas = document.createElement('canvas')
-      exportCanvas.width = canvasSize.width
-      exportCanvas.height = canvasSize.height
-      const exportCtx = exportCanvas.getContext('2d', { alpha: true })
-      
-      // Set optimal rendering settings
-      exportCtx.imageSmoothingEnabled = true
-      exportCtx.imageSmoothingQuality = 'high'
+      // Create export canvas and get frame dimensions
+      const { exportCanvas, exportCtx, frameExportWidth, frameExportHeight, frameExportX, frameExportY } = createExportCanvas()
 
       setProcessingProgress(25)
 
-      // Calculate frame dimensions for export based on selected canvas size
-      const FRAME_MARGIN = 0.88 // Same margin as preview
-      let frameExportWidth = canvasSize.width * FRAME_MARGIN
-      let frameExportHeight = canvasSize.height * FRAME_MARGIN
-      let frameExportX = 0
-      let frameExportY = 0
-
-      if (frameImage) {
-        const frameAspectRatio = frameImage.width / frameImage.height
-        const canvasAspectRatio = canvasSize.width / canvasSize.height
-
-        if (frameAspectRatio > canvasAspectRatio) {
-          // Frame is wider - fit to canvas width with margin
-          frameExportWidth = canvasSize.width * FRAME_MARGIN
-          frameExportHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
-          frameExportX = (canvasSize.width - frameExportWidth) / 2
-          frameExportY = (canvasSize.height - frameExportHeight) / 2
-        } else {
-          // Frame is taller - fit to canvas height with margin
-          frameExportHeight = canvasSize.height * FRAME_MARGIN
-          frameExportWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
-          frameExportX = (canvasSize.width - frameExportWidth) / 2
-          frameExportY = (canvasSize.height - frameExportHeight) / 2
-        }
-      }
-
-      if (backgroundImage) {
-        exportCtx.save()
-        
-        // Create clipping path for frame area in export
-        if (frameImage) {
-          exportCtx.beginPath()
-          exportCtx.rect(frameExportX, frameExportY, frameExportWidth, frameExportHeight)
-          exportCtx.clip()
-        }
-        
-        exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
-        
-        // Use the user's current zoom and position settings directly
-        // No scaling needed - export at the same scale as preview
-        const scale = zoom
-        const finalImgWidth = backgroundImage.width * scale
-        const finalImgHeight = backgroundImage.height * scale
-        
-        // Center and apply position offset
-        const x = (canvasSize.width - finalImgWidth) / 2 + position.x
-        const y = (canvasSize.height - finalImgHeight) / 2 + position.y
-        
-        // Draw background with clipping applied
-        exportCtx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
-        exportCtx.restore()
-      }
+      // Draw content to export canvas
+      drawExportContent(exportCtx, { frameExportWidth, frameExportHeight, frameExportX, frameExportY })
 
       setProcessingProgress(60)
-
-      if (frameImage && showFrame && backgroundImage) {
-        // Draw frame at the export resolution
-        exportCtx.drawImage(frameImage, frameExportX, frameExportY, frameExportWidth, frameExportHeight)
-      }
-
       setProcessingProgress(80)
 
       // Convert to blob with specified quality
@@ -862,7 +886,7 @@ const ImageEditor = () => {
       setIsProcessing(false)
       setProcessingProgress(0)
     }
-  }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize, showFrame, showNotification])
+  }, [backgroundImage, frameImage, canvasSize, showNotification, createExportCanvas, drawExportContent])
 
   // Reset function with animation and auto-fit
   const handleReset = useCallback(() => {
@@ -889,26 +913,27 @@ const ImageEditor = () => {
     showNotification('Background image cleared', 'info')
   }, [showNotification])
 
+  // Helper function to check if mouse is over preview area
+  const isMouseOverPreview = useCallback((e) => {
+    const previewContainer = document.querySelector('.canvas-container')
+    if (!previewContainer) return false
+    
+    const rect = previewContainer.getBoundingClientRect()
+    const mouseX = e.clientX
+    const mouseY = e.clientY
+    
+    return (
+      mouseX >= rect.left &&
+      mouseX <= rect.right &&
+      mouseY >= rect.top &&
+      mouseY <= rect.bottom
+    )
+  }, [])
+
   // Global wheel event handler - only works when mouse is over preview area
   useEffect(() => {
     const handleGlobalWheel = (e) => {
-      // Check if the mouse is over the preview area
-      const previewContainer = document.querySelector('.canvas-container')
-      if (!previewContainer) return
-      
-      const rect = previewContainer.getBoundingClientRect()
-      const mouseX = e.clientX
-      const mouseY = e.clientY
-      
-      // Check if mouse is within the preview area bounds
-      const isOverPreview = (
-        mouseX >= rect.left &&
-        mouseX <= rect.right &&
-        mouseY >= rect.top &&
-        mouseY <= rect.bottom
-      )
-      
-      if (isOverPreview) {
+      if (isMouseOverPreview(e)) {
         // Prevent page scrolling and handle zoom
         e.preventDefault()
         e.stopPropagation()
@@ -925,7 +950,7 @@ const ImageEditor = () => {
     return () => {
       document.removeEventListener('wheel', handleGlobalWheel)
     }
-  }, [backgroundImage, handleWheel])
+  }, [backgroundImage, handleWheel, isMouseOverPreview])
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 p-3 lg:p-4 max-w-[1560px] mx-auto">
@@ -977,7 +1002,7 @@ const ImageEditor = () => {
           </div>
           
           <section 
-            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} flex-1 flex-grow rounded-xl lg:rounded-2xl overflow-hidden`}
+            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} ${isGestureActive ? 'gesture-active' : ''} flex-1 flex-grow rounded-xl lg:rounded-2xl overflow-hidden`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -1306,5 +1331,3 @@ const ImageEditor = () => {
 }
 
 export default ImageEditor
-
-
