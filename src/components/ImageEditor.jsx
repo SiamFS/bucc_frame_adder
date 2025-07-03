@@ -774,135 +774,99 @@ const ImageEditor = () => {
     }))
   }, [backgroundImage, zoom, position, canvasSize])
 
-  // Helper function to create export canvas with frame dimensions
+  // Helper function to create export canvas with frame's native dimensions (no margin)
   const createExportCanvas = useCallback(() => {
-    const exportCanvas = document.createElement('canvas')
-    exportCanvas.width = canvasSize.width
-    exportCanvas.height = canvasSize.height
-    const exportCtx = exportCanvas.getContext('2d', { alpha: true })
-    
-    // Set optimal rendering settings
-    exportCtx.imageSmoothingEnabled = true
-    exportCtx.imageSmoothingQuality = 'high'
+    if (!frameImage) return {};
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = frameImage.width;
+    exportCanvas.height = frameImage.height;
+    const exportCtx = exportCanvas.getContext('2d', { alpha: true });
+    exportCtx.imageSmoothingEnabled = true;
+    exportCtx.imageSmoothingQuality = 'high';
 
-    // Calculate frame dimensions for export
-    const FRAME_MARGIN = 0.88 // Same margin as preview
-    let frameExportWidth = canvasSize.width * FRAME_MARGIN
-    let frameExportHeight = canvasSize.height * FRAME_MARGIN
-    let frameExportX = 0
-    let frameExportY = 0
+    // No margin for export: fill the whole canvas
+    const frameExportWidth = exportCanvas.width;
+    const frameExportHeight = exportCanvas.height;
+    const frameExportX = 0;
+    const frameExportY = 0;
 
-    if (frameImage) {
-      const frameAspectRatio = frameImage.width / frameImage.height
-      const canvasAspectRatio = canvasSize.width / canvasSize.height
+    return {
+      exportCanvas,
+      exportCtx,
+      frameExportWidth,
+      frameExportHeight,
+      frameExportX,
+      frameExportY,
+      exportWidth: exportCanvas.width,
+      exportHeight: exportCanvas.height
+    };
+  }, [frameImage]);
 
-      if (frameAspectRatio > canvasAspectRatio) {
-        frameExportWidth = canvasSize.width * FRAME_MARGIN
-        frameExportHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
-        frameExportX = (canvasSize.width - frameExportWidth) / 2
-        frameExportY = (canvasSize.height - frameExportHeight) / 2
-      } else {
-        frameExportHeight = canvasSize.height * FRAME_MARGIN
-        frameExportWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
-        frameExportX = (canvasSize.width - frameExportWidth) / 2
-        frameExportY = (canvasSize.height - frameExportHeight) / 2
-      }
-    }
-
-    return { 
-      exportCanvas, 
-      exportCtx, 
-      frameExportWidth, 
-      frameExportHeight, 
-      frameExportX, 
-      frameExportY 
-    }
-  }, [canvasSize, frameImage])
-
-  // Helper function to draw export content
+  // Helper function to draw export content (background and frame) at export size, edge-to-edge
   const drawExportContent = useCallback((exportCtx, frameDimensions) => {
-    if (backgroundImage) {
-      exportCtx.save()
-      
-      // Create clipping path for frame area in export
-      if (frameImage) {
-        exportCtx.beginPath()
-        exportCtx.rect(frameDimensions.frameExportX, frameDimensions.frameExportY, frameDimensions.frameExportWidth, frameDimensions.frameExportHeight)
-        exportCtx.clip()
-      }
-      
-      exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
-      
-      // Use the user's current zoom and position settings directly
-      const scale = zoom
-      const finalImgWidth = backgroundImage.width * scale
-      const finalImgHeight = backgroundImage.height * scale
-      
-      // Center and apply position offset
-      const x = (canvasSize.width - finalImgWidth) / 2 + position.x
-      const y = (canvasSize.height - finalImgHeight) / 2 + position.y
-      
-      // Draw background with clipping applied
-      exportCtx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
-      exportCtx.restore()
-    }
+    if (!backgroundImage || !frameImage) return;
+    exportCtx.save();
+    exportCtx.beginPath();
+    exportCtx.rect(0, 0, frameImage.width, frameImage.height);
+    exportCtx.clip();
+    exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
 
-    if (frameImage && showFrame && backgroundImage) {
-      // Draw frame at the export resolution
-      exportCtx.drawImage(frameImage, frameDimensions.frameExportX, frameDimensions.frameExportY, frameDimensions.frameExportWidth, frameDimensions.frameExportHeight)
-    }
-  }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize, showFrame])
+    // Calculate how to map the preview's zoom/position to the export size
+    const scaleX = frameImage.width / canvasSize.width;
+    const scaleY = frameImage.height / canvasSize.height;
+    const exportZoom = zoom;
+    const finalImgWidth = backgroundImage.width * exportZoom * scaleX;
+    const finalImgHeight = backgroundImage.height * exportZoom * scaleY;
+    const x = (frameImage.width - finalImgWidth) / 2 + position.x * scaleX;
+    const y = (frameImage.height - finalImgHeight) / 2 + position.y * scaleY;
+    exportCtx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight);
+    exportCtx.restore();
+    // Draw frame on top, edge-to-edge
+    exportCtx.globalCompositeOperation = 'source-over';
+    exportCtx.drawImage(frameImage, 0, 0, frameImage.width, frameImage.height);
+  }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize]);
 
   // Enhanced download with quality options
   const handleDownload = useCallback(async (quality = 1.0) => {
-    if (!backgroundImage && !frameImage) {
-      showNotification('Please upload at least one image to download', 'error')
-      return
+    if (!backgroundImage || !frameImage) {
+      showNotification('Please upload a background image and ensure the frame is loaded', 'error');
+      return;
     }
-    
-    setIsProcessing(true)
-    setProcessingProgress(0)
-    
+    setIsProcessing(true);
+    setProcessingProgress(0);
     try {
       // Create export canvas and get frame dimensions
-      const { exportCanvas, exportCtx, frameExportWidth, frameExportHeight, frameExportX, frameExportY } = createExportCanvas()
-
-      setProcessingProgress(25)
-
+      const { exportCanvas, exportCtx, frameExportWidth, frameExportHeight, frameExportX, frameExportY, exportWidth, exportHeight } = createExportCanvas();
+      setProcessingProgress(25);
       // Draw content to export canvas
-      drawExportContent(exportCtx, { frameExportWidth, frameExportHeight, frameExportX, frameExportY })
-
-      setProcessingProgress(60)
-      setProcessingProgress(80)
-
+      drawExportContent(exportCtx, { frameExportWidth, frameExportHeight, frameExportX, frameExportY });
+      setProcessingProgress(60);
+      setProcessingProgress(80);
       // Convert to blob with specified quality
       exportCanvas.toBlob((blob) => {
         if (!blob) {
-          showNotification('Failed to generate image', 'error')
-          setIsProcessing(false)
-          return
+          showNotification('Failed to generate image', 'error');
+          setIsProcessing(false);
+          return;
         }
-
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `Bucc_frame_photo_${canvasSize.width}x${canvasSize.height}.png`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-        
-        setProcessingProgress(100)
-        setIsProcessing(false)
-        setTimeout(() => setProcessingProgress(0), 1000)
-      }, 'image/png', quality)
-      
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Bucc_frame_photo_${exportWidth}x${exportHeight}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setProcessingProgress(100);
+        setIsProcessing(false);
+        setTimeout(() => setProcessingProgress(0), 1000);
+      }, 'image/png', quality);
     } catch (error) {
-      showNotification('Download failed: ' + error.message, 'error')
-      setIsProcessing(false)
-      setProcessingProgress(0)
+      showNotification('Download failed: ' + error.message, 'error');
+      setIsProcessing(false);
+      setProcessingProgress(0);
     }
-  }, [backgroundImage, frameImage, canvasSize, showNotification, createExportCanvas, drawExportContent])
+  }, [backgroundImage, frameImage, showNotification, createExportCanvas, drawExportContent])
 
   // Reset function with animation and auto-fit
   const handleReset = useCallback(() => {
