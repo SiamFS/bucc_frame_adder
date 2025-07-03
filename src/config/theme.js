@@ -213,14 +213,20 @@ export const organizationConfig = {
     'Excellence',
     'Inclusivity',
     'Continuous Learning'
-  ]
+  ],
+
+  // Logo Paths
+  logos: {
+    icon: '/src/assets/BUCC_Logo_icon.svg',
+    full: '/src/assets/BUCC_Logo.svg',
+  }
 };
 
 // Application Configuration
 export const appConfig = {
   name: 'BUCC Frame Editor',
   version: '2.0.0',
-  description: 'Photo frame overlay tool by BRAC University Computer Club',
+  description: 'Professional photo frame overlay tool by BRAC University Computer Club',
   author: 'BRAC University Computer Club',
   
   // Feature Flags
