@@ -59,7 +59,7 @@ const ImageEditor = () => {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [showFrame, setShowFrame] = useState(true)
-  const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1080 })
+  const [canvasSize, setCanvasSize] = useState({ width: 2000, height: 2000 }) // Default square, will be updated when frame loads
   const [processingProgress, setProcessingProgress] = useState(0)
   const [notification, setNotification] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -105,7 +105,23 @@ const ImageEditor = () => {
       const img = new Image()
       img.onload = () => {
         setFrameImage(img)
-        console.log('BUCC frame loaded successfully')
+        
+        // Set default canvas size based on frame's aspect ratio at 2000px max dimension
+        const frameAspectRatio = img.width / img.height
+        let defaultWidth, defaultHeight
+        
+        if (frameAspectRatio >= 1) {
+          // Frame is wider or square
+          defaultWidth = 2000
+          defaultHeight = Math.round(2000 / frameAspectRatio)
+        } else {
+          // Frame is taller
+          defaultHeight = 2000
+          defaultWidth = Math.round(2000 * frameAspectRatio)
+        }
+        
+        setCanvasSize({ width: defaultWidth, height: defaultHeight })
+        console.log(`BUCC frame loaded successfully (${img.width}×${img.height}), default canvas: ${defaultWidth}×${defaultHeight}`)
       }
       img.onerror = () => {
         console.error('Failed to load BUCC frame')
@@ -200,7 +216,7 @@ const ImageEditor = () => {
     setPosition({ x: 0, y: 0 }) // Center the image
   }, [backgroundImage, frameImage, canvasSize])
 
-  // Calculate valid resolution options - prioritize user image quality (Option 2)
+  // Calculate valid resolution options - based on frame's aspect ratio
   const getValidResolutions = useCallback(() => {
     if (!backgroundImage || !frameImage) return []
 
@@ -209,44 +225,89 @@ const ImageEditor = () => {
     const bgHeight = backgroundImage.height
     const frameWidth = frameImage.width
     const frameHeight = frameImage.height
+    
+    // Calculate frame's aspect ratio to maintain consistency
+    const frameAspectRatio = frameWidth / frameHeight
 
-    // Standard resolutions to check against
-    const standardResolutions = [
-      { width: 1920, height: 1080, label: 'Full HD (1920×1080)', key: 'FHD' },
-      { width: 2560, height: 1440, label: '2K QHD (2560×1440)', key: '2K' },
-      { width: 3840, height: 2160, label: '4K UHD (3840×2160)', key: '4K' }
+    // Create resolutions based on frame's aspect ratio
+    const baseResolutions = [
+      { size: 1080, label: 'HD', key: 'HD' },
+      { size: 1440, label: '2K', key: '2K' },
+      { size: 1920, label: 'Full HD', key: 'FHD' },
+      { size: 2160, label: '4K', key: '4K' },
+      { size: 2880, label: '5K', key: '5K' }
     ]
 
-    // Prioritize user image quality - allow export up to the user's image resolution
-    // The frame may be upscaled if user uploads a higher-res image
-    const maxWidth = bgWidth  // Use background image width as limit
-    const maxHeight = bgHeight // Use background image height as limit
+    // Generate resolutions maintaining frame's aspect ratio
+    const aspectRatioResolutions = baseResolutions.map(base => {
+      let width, height
+      
+      if (frameAspectRatio >= 1) {
+        // Frame is wider or square
+        width = base.size
+        height = Math.round(base.size / frameAspectRatio)
+      } else {
+        // Frame is taller
+        height = base.size
+        width = Math.round(base.size * frameAspectRatio)
+      }
+      
+      return {
+        width,
+        height,
+        label: `${base.label} (${width}×${height})`,
+        key: base.key
+      }
+    })
 
-    const validResolutions = standardResolutions.filter(res => 
-      res.width <= maxWidth && res.height <= maxHeight
-    ).map(res => {
+    // Filter based on background image quality - don't create fake resolutions
+    const maxResolution = Math.max(bgWidth, bgHeight)
+    
+    const validResolutions = aspectRatioResolutions.filter(res => {
+      const resMaxDimension = Math.max(res.width, res.height)
+      return resMaxDimension <= maxResolution
+    }).map(res => {
       // Add upscaling indicator if frame needs to be upscaled
       const frameNeedsUpscaling = res.width > frameWidth || res.height > frameHeight
       return {
         ...res,
         frameUpscaled: frameNeedsUpscaling,
-        label: res.label,
         upscaleNote: frameNeedsUpscaling ? 'Frame Upscaled' : null
       }
     })
 
-    // Always include the current canvas size if it's valid
-    const currentRes = { 
-      width: canvasSize.width, 
-      height: canvasSize.height, 
-      label: `Current (${canvasSize.width}×${canvasSize.height})`,
-      key: 'CURRENT',
-      frameUpscaled: canvasSize.width > frameWidth || canvasSize.height > frameHeight,
-      upscaleNote: (canvasSize.width > frameWidth || canvasSize.height > frameHeight) ? 'Frame Upscaled' : null
+    // Always include the original frame size if it fits within background quality
+    const originalFrameMaxDim = Math.max(frameWidth, frameHeight)
+    if (originalFrameMaxDim <= maxResolution) {
+      const originalRes = {
+        width: frameWidth,
+        height: frameHeight,
+        label: `Original (${frameWidth}×${frameHeight})`,
+        key: 'ORIGINAL',
+        frameUpscaled: false,
+        upscaleNote: null
+      }
+      
+      const exists = validResolutions.some(res => 
+        res.width === frameWidth && res.height === frameHeight
+      )
+      if (!exists) {
+        validResolutions.push(originalRes)
+      }
     }
-    
-    if (canvasSize.width <= maxWidth && canvasSize.height <= maxHeight) {
-      // Add current if it's not already in the list
+
+    // Include current canvas size if it's different and valid
+    const currentMaxDim = Math.max(canvasSize.width, canvasSize.height)
+    if (currentMaxDim <= maxResolution) {
+      const currentRes = { 
+        width: canvasSize.width, 
+        height: canvasSize.height, 
+        label: `Current (${canvasSize.width}×${canvasSize.height})`,
+        key: 'CURRENT',
+        frameUpscaled: canvasSize.width > frameWidth || canvasSize.height > frameHeight,
+        upscaleNote: (canvasSize.width > frameWidth || canvasSize.height > frameHeight) ? 'Frame Upscaled' : null
+      }
+      
       const exists = validResolutions.some(res => 
         res.width === canvasSize.width && res.height === canvasSize.height
       )
@@ -701,10 +762,10 @@ const ImageEditor = () => {
     setProcessingProgress(0)
     
     try {
-      // Create high-quality export canvas with EXACT frame dimensions
+      // Create high-quality export canvas with SELECTED canvas resolution (not frame's original size)
       const exportCanvas = document.createElement('canvas')
-      exportCanvas.width = frameImage.width
-      exportCanvas.height = frameImage.height
+      exportCanvas.width = canvasSize.width
+      exportCanvas.height = canvasSize.height
       const exportCtx = exportCanvas.getContext('2d', { alpha: true })
       
       // Set optimal rendering settings
@@ -713,11 +774,31 @@ const ImageEditor = () => {
 
       setProcessingProgress(25)
 
-      // Calculate frame dimensions for export - use exact frame size, no margins
-      const frameExportWidth = frameImage.width
-      const frameExportHeight = frameImage.height
-      const frameExportX = 0
-      const frameExportY = 0
+      // Calculate frame dimensions for export based on selected canvas size
+      const FRAME_MARGIN = 0.88 // Same margin as preview
+      let frameExportWidth = canvasSize.width * FRAME_MARGIN
+      let frameExportHeight = canvasSize.height * FRAME_MARGIN
+      let frameExportX = 0
+      let frameExportY = 0
+
+      if (frameImage) {
+        const frameAspectRatio = frameImage.width / frameImage.height
+        const canvasAspectRatio = canvasSize.width / canvasSize.height
+
+        if (frameAspectRatio > canvasAspectRatio) {
+          // Frame is wider - fit to canvas width with margin
+          frameExportWidth = canvasSize.width * FRAME_MARGIN
+          frameExportHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
+          frameExportX = (canvasSize.width - frameExportWidth) / 2
+          frameExportY = (canvasSize.height - frameExportHeight) / 2
+        } else {
+          // Frame is taller - fit to canvas height with margin
+          frameExportHeight = canvasSize.height * FRAME_MARGIN
+          frameExportWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
+          frameExportX = (canvasSize.width - frameExportWidth) / 2
+          frameExportY = (canvasSize.height - frameExportHeight) / 2
+        }
+      }
 
       if (backgroundImage) {
         exportCtx.save()
@@ -731,39 +812,15 @@ const ImageEditor = () => {
         
         exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
         
-        // Calculate the actual preview frame area with margin (for scaling calculations)
-        const FRAME_MARGIN = 0.88 // Same margin as preview
-        let previewFrameWidth = canvasSize.width * FRAME_MARGIN
-        let previewFrameHeight = canvasSize.height * FRAME_MARGIN
+        // Use the user's current zoom and position settings directly
+        // No scaling needed - export at the same scale as preview
+        const scale = zoom
+        const finalImgWidth = backgroundImage.width * scale
+        const finalImgHeight = backgroundImage.height * scale
         
-        if (frameImage) {
-          const frameAspectRatio = frameImage.width / frameImage.height
-          const canvasAspectRatio = canvasSize.width / canvasSize.height
-
-          if (frameAspectRatio > canvasAspectRatio) {
-            previewFrameWidth = canvasSize.width * FRAME_MARGIN
-            previewFrameHeight = (canvasSize.width * FRAME_MARGIN) / frameAspectRatio
-          } else {
-            previewFrameHeight = canvasSize.height * FRAME_MARGIN
-            previewFrameWidth = (canvasSize.height * FRAME_MARGIN) * frameAspectRatio
-          }
-        }
-        
-        // Scale the user's adjustments from preview frame to actual frame
-        const scaleToActualFrame = frameExportWidth / previewFrameWidth
-        
-        // Apply user's zoom and position, scaled to actual frame size
-        const actualScale = zoom * scaleToActualFrame
-        const finalImgWidth = backgroundImage.width * actualScale
-        const finalImgHeight = backgroundImage.height * actualScale
-        
-        // Scale position adjustments to actual frame size
-        const actualPositionX = position.x * scaleToActualFrame
-        const actualPositionY = position.y * scaleToActualFrame
-        
-        // Center and apply position offset relative to actual frame
-        const x = (frameExportWidth - finalImgWidth) / 2 + actualPositionX
-        const y = (frameExportHeight - finalImgHeight) / 2 + actualPositionY
+        // Center and apply position offset
+        const x = (canvasSize.width - finalImgWidth) / 2 + position.x
+        const y = (canvasSize.height - finalImgHeight) / 2 + position.y
         
         // Draw background with clipping applied
         exportCtx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight)
@@ -773,6 +830,7 @@ const ImageEditor = () => {
       setProcessingProgress(60)
 
       if (frameImage && showFrame && backgroundImage) {
+        // Draw frame at the export resolution
         exportCtx.drawImage(frameImage, frameExportX, frameExportY, frameExportWidth, frameExportHeight)
       }
 
@@ -789,7 +847,7 @@ const ImageEditor = () => {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `Bucc_frame_photo.png`
+        a.download = `Bucc_frame_photo_${canvasSize.width}x${canvasSize.height}.png`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
