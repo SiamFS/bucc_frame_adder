@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { 
   PhotoIcon, 
   ArrowDownTrayIcon,
@@ -13,7 +13,6 @@ import {
   TrashIcon,
   EyeIcon,
   EyeSlashIcon,
-  CogIcon,
   CloudArrowUpIcon
 } from '@heroicons/react/24/outline'
 import BuccFrame from '../assets/bucc_frame.png'
@@ -63,7 +62,6 @@ const ImageEditor = () => {
   const [processingProgress, setProcessingProgress] = useState(0)
   const [notification, setNotification] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
-  const [isMouseOverPreview, setIsMouseOverPreview] = useState(false)
   const [showResolutionSelector, setShowResolutionSelector] = useState(false)
   
   // Enhanced gesture state for pinch-to-zoom and smooth panning
@@ -85,19 +83,13 @@ const ImageEditor = () => {
   const touchStartTimeRef = useRef(0)
   const gestureStartRef = useRef({ zoom: 1, position: { x: 0, y: 0 } })
 
-  // Memoized constants for performance
-  const CANVAS_CONFIGS = useMemo(() => ({
-    HD: { width: 1920, height: 1080, label: 'Full HD (1920x1080)' },
-    FHD: { width: 2560, height: 1440, label: '2K QHD (2560x1440)' },
-    UHD: { width: 3840, height: 2160, label: '4K UHD (3840x2160)' }
-  }), [])
-
   // Initialize worker and load BUCC frame on mount
   useEffect(() => {
     try {
       workerRef.current = createImageWorker()
     } catch (error) {
-      console.warn('Web Worker not supported, falling back to main thread processing')
+      console.warn('Web Worker not supported, falling back to main thread processing:', error.message)
+      workerRef.current = null
     }
 
     // Load the BUCC frame automatically
@@ -141,6 +133,28 @@ const ImageEditor = () => {
     }
   }, []) // Remove showNotification dependency
 
+  // Helper functions for file validation
+  const handleImageLoad = useCallback((img, file, type, resolve) => {
+    // Additional validation for frame images
+    if (type === 'frame' && !file.name.toLowerCase().includes('png')) {
+      console.warn('Frame should be a PNG file for transparency support')
+    }
+    
+    resolve(img)
+    setProcessingProgress(0)
+  }, [])
+
+  const handleImageError = useCallback((reject) => {
+    reject(new Error('Failed to load image'))
+  }, [])
+
+  const handleReaderLoad = useCallback((e, file, type, resolve, reject) => {
+    const img = new Image()
+    img.addEventListener('load', () => handleImageLoad(img, file, type, resolve))
+    img.addEventListener('error', () => handleImageError(reject))
+    img.src = e.target.result
+  }, [handleImageLoad, handleImageError])
+
   // Notification system
   const showNotification = useCallback((message, type = 'info', duration = 3000) => {
     setNotification({ message, type })
@@ -162,28 +176,14 @@ const ImageEditor = () => {
       }
 
       const reader = new FileReader()
-      reader.onprogress = (e) => {
+      reader.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
           setProcessingProgress((e.loaded / e.total) * 100)
         }
-      }
+      })
       
-      reader.onload = (e) => {
-        const img = new Image()
-        img.onload = () => {
-          // Additional validation for frame images
-          if (type === 'frame' && !file.name.toLowerCase().includes('png')) {
-            console.warn('Frame should be a PNG file for transparency support')
-          }
-          
-          resolve(img)
-          setProcessingProgress(0)
-        }
-        img.onerror = () => reject(new Error('Failed to load image'))
-        img.src = e.target.result
-      }
-      
-      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.addEventListener('load', (e) => handleReaderLoad(e, file, type, resolve, reject))
+      reader.addEventListener('error', () => reject(new Error('Failed to read file')))
       reader.readAsDataURL(file)
     })
   }, [])
@@ -196,8 +196,7 @@ const ImageEditor = () => {
     const frameAspectRatio = frameImage.width / frameImage.height
     const canvasAspectRatio = canvasSize.width / canvasSize.height
 
-    let frameDisplayWidth = canvasSize.width
-    let frameDisplayHeight = canvasSize.height
+    let frameDisplayWidth, frameDisplayHeight
 
     if (frameAspectRatio > canvasAspectRatio) {
       frameDisplayWidth = canvasSize.width
@@ -933,9 +932,11 @@ const ImageEditor = () => {
       {/* Notification System */}
       {notification && (
         <div className={`fixed top-4 right-4 z-50 max-w-[calc(100vw-2rem)] sm:max-w-sm p-3 lg:p-4 rounded-xl shadow-2xl transition-all duration-200 ${
-          notification.type === 'success' ? 'bg-green-500 text-white' :
-          notification.type === 'error' ? 'bg-red-500 text-white' :
-          'bg-blue-500 text-white'
+          (() => {
+            if (notification.type === 'success') return 'bg-green-500 text-white'
+            if (notification.type === 'error') return 'bg-red-500 text-white'
+            return 'bg-blue-500 text-white'
+          })()
         }`}>
           <div className="flex items-center gap-2 lg:gap-3">
             {notification.type === 'success' && <CheckCircleIcon className="w-5 h-5 lg:w-6 lg:h-6" />}
@@ -975,12 +976,13 @@ const ImageEditor = () => {
             </div>
           </div>
           
-          <div 
+          <section 
             className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} flex-1 flex-grow rounded-xl lg:rounded-2xl overflow-hidden`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             style={{ minHeight: '400px', height: 'calc(100vh - 220px)' }}
+            aria-label="Image preview and editing area"
           >
             <canvas
               ref={canvasRef}
@@ -1015,7 +1017,7 @@ const ImageEditor = () => {
               </div>
             )}
           
-          </div>
+          </section>
         </div>
       </div>
 
@@ -1040,20 +1042,20 @@ const ImageEditor = () => {
           </div>
           
           {/* Background Image Upload with Drag & Drop */}
-          <div 
-            className={`upload-area ${backgroundImage ? 'has-image' : ''} ${isDragOver ? 'drag-over' : ''} p-4 lg:p-8 relative`}
+          <button 
+            type="button"
+            className={`upload-area ${backgroundImage ? 'has-image' : ''} ${isDragOver ? 'drag-over' : ''} p-4 lg:p-8 relative w-full`}
             onClick={() => backgroundInputRef.current?.click()}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            role="button"
-            tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 backgroundInputRef.current?.click()
               }
             }}
+            aria-label="Upload background image"
           >
             <div className="text-center py-4 lg:py-6">
               {isDragOver ? (
@@ -1087,7 +1089,7 @@ const ImageEditor = () => {
               onChange={handleBackgroundUpload}
               className="input-file"
             />
-          </div>
+          </button>
 
           {/* Frame Info */}
           {/* Processing Progress */}
