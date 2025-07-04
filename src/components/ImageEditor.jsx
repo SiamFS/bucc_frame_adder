@@ -747,8 +747,13 @@ const ImageEditor = () => {
     // Clear gesture state after a short delay to ensure smooth transition back to filters
     setTimeout(() => {
       setIsGestureActive(false)
-    }, 100)
-  }, [isDragging])
+      // Force a redraw immediately after gesture ends to prevent flicker
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext('2d', { alpha: true })
+        if (ctx) drawCanvas()
+      }
+    }, 0)
+  }, [isDragging, drawCanvas])
 
   // Enhanced wheel zoom with smooth scaling
   const handleWheel = useCallback((e) => {
@@ -872,7 +877,7 @@ const ImageEditor = () => {
         if (captionSection) {
           captionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
           setTimeout(() => {
-            window.scrollBy({ top: -64, left: 0, behavior: 'smooth' }); // Increased offset for more space above
+            window.scrollBy({ top: -80, left: 0, behavior: 'smooth' }); // Increased offset for more space above
           }, 400); // Wait for scrollIntoView to finish
         }
       }, 'image/png', quality);

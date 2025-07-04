@@ -18,8 +18,10 @@ const CustomSlider = ({
   const trackRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
   
-  // Calculate percentage for styling and positioning
-  const percentage = ((value - min) / (max - min)) * 100
+  // Clamp value to [min, max] to prevent out-of-bounds and NaN
+  const clampedValue = Math.max(min, Math.min(max, typeof value === 'number' ? value : min))
+  // Prevent NaN in percentage calculation
+  const percentage = (max !== min) ? ((clampedValue - min) / (max - min)) * 100 : 0
   
   // Handle thumb drag
   const handleThumbMouseDown = useCallback((e) => {
@@ -144,9 +146,9 @@ const CustomSlider = ({
           role="slider"
           aria-valuemin={min}
           aria-valuemax={max}
-          aria-valuenow={value}
+          aria-valuenow={clampedValue}
           aria-label={label}
-          tabIndex={0}
+          tabIndex={-1} // Prevent accidental focus on track
           onClick={handleTrackClick}
           onTouchStart={handleTrackClick}
           onKeyDown={handleKeyDown}
@@ -156,11 +158,11 @@ const CustomSlider = ({
             className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-sm"
             style={{ width: `${percentage}%` }}
           />
-          
           {/* Slider Thumb */}
           <button
             type="button"
             data-slider-thumb="true"
+            tabIndex={0}
             className={`absolute top-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white border-2 border-primary-500 rounded-full shadow-md transform -translate-y-1/2 -translate-x-1/2 cursor-grab focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1 transition-all duration-150 ${
               isDragging 
                 ? 'cursor-grabbing scale-125 shadow-lg border-primary-600' 
