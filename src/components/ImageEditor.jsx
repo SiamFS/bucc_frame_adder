@@ -479,9 +479,12 @@ const ImageEditor = () => {
   // Auto-fit when both images are loaded (only on initial load)
   useEffect(() => {
     if (backgroundImage && frameImage) {
-      // Only auto-fit if this is the first time both images are loaded
-      // Don't auto-fit on subsequent canvas size changes
-      autoFitToFrame()
+      // Set canvas size to frame's original size and aspect ratio
+      setCanvasSize({ width: frameImage.width, height: frameImage.height });
+      // After setting canvas size, auto-fit background image to frame
+      setTimeout(() => {
+        autoFitToFrame();
+      }, 0);
     }
   }, [backgroundImage, frameImage]) // Removed autoFitToFrame from dependencies
 
