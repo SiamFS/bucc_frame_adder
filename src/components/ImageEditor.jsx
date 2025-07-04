@@ -786,19 +786,19 @@ const ImageEditor = () => {
     }))
   }, [backgroundImage, zoom, position, canvasSize])
 
-  // Helper function to create export canvas with frame's native dimensions (no margin)
+  // Helper function to create export canvas with current preview (canvas) size
   const createExportCanvas = useCallback(() => {
     if (!frameImage) return {};
     const exportCanvas = document.createElement('canvas');
-    exportCanvas.width = frameImage.width;
-    exportCanvas.height = frameImage.height;
+    exportCanvas.width = canvasSize.width;
+    exportCanvas.height = canvasSize.height;
     const exportCtx = exportCanvas.getContext('2d', { alpha: true });
     exportCtx.imageSmoothingEnabled = true;
     exportCtx.imageSmoothingQuality = 'high';
 
-    // No margin for export: fill the whole canvas
-    const frameExportWidth = exportCanvas.width;
-    const frameExportHeight = exportCanvas.height;
+    // Use the current preview size (canvasSize)
+    const frameExportWidth = canvasSize.width;
+    const frameExportHeight = canvasSize.height;
     const frameExportX = 0;
     const frameExportY = 0;
 
@@ -808,34 +808,30 @@ const ImageEditor = () => {
       frameExportWidth,
       frameExportHeight,
       frameExportX,
-      frameExportY,
-      exportWidth: exportCanvas.width,
-      exportHeight: exportCanvas.height
+      frameExportY
     };
-  }, [frameImage]);
+  }, [frameImage, canvasSize]);
 
   // Helper function to draw export content (background and frame) at export size, edge-to-edge
   const drawExportContent = useCallback((exportCtx, frameDimensions) => {
     if (!backgroundImage || !frameImage) return;
     exportCtx.save();
     exportCtx.beginPath();
-    exportCtx.rect(0, 0, frameImage.width, frameImage.height);
+    exportCtx.rect(0, 0, frameDimensions.frameExportWidth, frameDimensions.frameExportHeight);
     exportCtx.clip();
     exportCtx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
 
     // Calculate how to map the preview's zoom/position to the export size
-    const scaleX = frameImage.width / canvasSize.width;
-    const scaleY = frameImage.height / canvasSize.height;
     const exportZoom = zoom;
-    const finalImgWidth = backgroundImage.width * exportZoom * scaleX;
-    const finalImgHeight = backgroundImage.height * exportZoom * scaleY;
-    const x = (frameImage.width - finalImgWidth) / 2 + position.x * scaleX;
-    const y = (frameImage.height - finalImgHeight) / 2 + position.y * scaleY;
+    const finalImgWidth = backgroundImage.width * exportZoom;
+    const finalImgHeight = backgroundImage.height * exportZoom;
+    const x = (canvasSize.width - finalImgWidth) / 2 + position.x;
+    const y = (canvasSize.height - finalImgHeight) / 2 + position.y;
     exportCtx.drawImage(backgroundImage, x, y, finalImgWidth, finalImgHeight);
     exportCtx.restore();
     // Draw frame on top, edge-to-edge
     exportCtx.globalCompositeOperation = 'source-over';
-    exportCtx.drawImage(frameImage, 0, 0, frameImage.width, frameImage.height);
+    exportCtx.drawImage(frameImage, 0, 0, canvasSize.width, canvasSize.height);
   }, [backgroundImage, frameImage, brightness, contrast, zoom, position, canvasSize]);
 
   // Enhanced download with quality options
@@ -848,7 +844,7 @@ const ImageEditor = () => {
     setProcessingProgress(0);
     try {
       // Create export canvas and get frame dimensions
-      const { exportCanvas, exportCtx, frameExportWidth, frameExportHeight, frameExportX, frameExportY, exportWidth, exportHeight } = createExportCanvas();
+      const { exportCanvas, exportCtx, frameExportWidth, frameExportHeight, frameExportX, frameExportY } = createExportCanvas();
       setProcessingProgress(25);
       // Draw content to export canvas
       drawExportContent(exportCtx, { frameExportWidth, frameExportHeight, frameExportX, frameExportY });
@@ -864,7 +860,7 @@ const ImageEditor = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Bucc_frame_photo_${exportWidth}x${exportHeight}.png`;
+        a.download = `Bucc_frame_photo_${canvasSize.width}x${canvasSize.height}.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -886,7 +882,7 @@ const ImageEditor = () => {
       setIsProcessing(false);
       setProcessingProgress(0);
     }
-  }, [backgroundImage, frameImage, showNotification, createExportCanvas, drawExportContent])
+  }, [backgroundImage, frameImage, showNotification, createExportCanvas, drawExportContent, canvasSize]);
 
   // Reset function with animation and auto-fit
   const handleReset = useCallback(() => {
