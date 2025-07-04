@@ -430,6 +430,12 @@ const ImageEditor = () => {
       desynchronized: true 
     })
     
+    // Always reset context state
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.filter = 'none';
+
     // Clear with transparency
     ctx.clearRect(0, 0, canvasSize.width, canvasSize.height)
 
@@ -450,9 +456,7 @@ const ImageEditor = () => {
       }
       // Apply filters only when not gesturing
       const isActivelyGesturing = isDragging || isPinching || isGestureActive
-      if (!isActivelyGesturing) {
-        ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
-      }
+      ctx.filter = !isActivelyGesturing ? `brightness(${brightness}%) contrast(${contrast}%)` : 'none';
       // Use the user's current zoom setting directly
       const scale = zoom;
       const finalImgWidth = backgroundImage.width * scale;
@@ -467,6 +471,7 @@ const ImageEditor = () => {
     // Always draw frame last, on top, but only if backgroundImage exists
     if (backgroundImage && frameImage && showFrame) {
       ctx.globalCompositeOperation = 'source-over';
+      ctx.filter = 'none';
       ctx.drawImage(frameImage, frameDimensions.frameX, frameDimensions.frameY, frameDimensions.frameDisplayWidth, frameDimensions.frameDisplayHeight)
     }
   }, [backgroundImage, frameImage, showFrame, calculateFrameDimensions, isDragging, isPinching, isGestureActive, brightness, contrast, zoom, position, canvasSize])
@@ -867,7 +872,7 @@ const ImageEditor = () => {
         if (captionSection) {
           captionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
           setTimeout(() => {
-            window.scrollBy({ top: -140, left: 0, behavior: 'smooth' }); // Increased offset for more space above
+            window.scrollBy({ top: -64, left: 0, behavior: 'smooth' }); // Increased offset for more space above
           }, 400); // Wait for scrollIntoView to finish
         }
       }, 'image/png', quality);
