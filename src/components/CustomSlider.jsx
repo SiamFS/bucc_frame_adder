@@ -128,7 +128,7 @@ const CustomSlider = ({
   return (
     <div className="space-y-2">
       {/* Label Row */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-1 sm:px-0">
         <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
           <span className="text-primary-500 dark:text-primary-400">{icon}</span>
           <span>{label}</span>
@@ -139,10 +139,10 @@ const CustomSlider = ({
       </div>
       
       {/* Slider Track */}
-      <div className="relative py-2">
+      <div className="relative py-1 sm:py-2">
         <div 
           ref={trackRef}
-          className="w-full h-1 sm:h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full relative shadow-inner"
+          className="w-full h-1.5 sm:h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full relative shadow-inner"
           role="slider"
           aria-valuemin={min}
           aria-valuemax={max}
@@ -163,7 +163,9 @@ const CustomSlider = ({
             type="button"
             data-slider-thumb="true"
             tabIndex={0}
-            className={`absolute top-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white border-2 border-primary-500 rounded-full shadow-md transform -translate-y-1/2 -translate-x-1/2 cursor-grab focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1 transition-all duration-150 ${
+            className={`absolute top-1/2 
+              w-5 h-5 sm:w-4 sm:h-4 
+              bg-white border-2 border-primary-500 rounded-full shadow-md transform -translate-y-1/2 -translate-x-1/2 cursor-grab focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1 transition-all duration-150 ${
               isDragging 
                 ? 'cursor-grabbing scale-125 shadow-lg border-primary-600' 
                 : 'hover:scale-110 hover:shadow-md hover:border-primary-600'
@@ -180,7 +182,7 @@ const CustomSlider = ({
       </div>
       
       {/* Value Range Indicators */}
-      <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-0.5">
+      <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-1 sm:px-0">
         <span>{min}{label.includes('Zoom') ? 'x' : '%'}</span>
         <span className="text-slate-500 dark:text-slate-400 font-medium">
           {label.includes('Zoom') ? '1x' : '100%'}

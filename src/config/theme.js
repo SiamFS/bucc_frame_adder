@@ -226,7 +226,7 @@ export const organizationConfig = {
 export const appConfig = {
   name: 'BUCC Frame Editor',
   version: '2.0.0',
-  description: 'Professional photo frame overlay tool by BRAC University Computer Club',
+  description: 'Photo frame overlay tool by BRAC University Computer Club',
   author: 'BRAC University Computer Club',
   
   // Feature Flags

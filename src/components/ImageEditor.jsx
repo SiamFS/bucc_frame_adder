@@ -1013,6 +1013,9 @@ const ImageEditor = () => {
     }
   }, [handleStart, handleMove, handleEnd])
 
+  // Helper to detect mobile (below lg)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 p-3 lg:p-4 max-w-[1560px] mx-auto">
       {/* Notification System */}
@@ -1034,89 +1037,91 @@ const ImageEditor = () => {
       )}
 
       {/* Canvas Section - Preview (Center) */}
-      <div className="lg:col-span-6 order-2">
-        <div className="glass-morphism rounded-2xl lg:rounded-3xl p-2 lg:p-3 shadow-xl h-full flex flex-col bg-slate-200 dark:bg-dark-bg-secondary">
-          <div className="flex items-center justify-between mb-2 py-1 px-1 lg:px-2">
-            <div className="flex items-center gap-3">
-              <h2 className="text-sm lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
-              {/* Interactive Controls - Beside Preview Title */}
-              {backgroundImage && (
-                <div className="bg-black/5 dark:bg-white/5 backdrop-blur-sm rounded-xl px-3 py-1.5 lg:px-4 lg:py-2 text-xs lg:text-sm border border-black/10 dark:border-white/10">
-                  <div className="flex items-center gap-3 lg:gap-4 text-slate-500 dark:text-slate-400">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                      <span>Drag</span>
+      {(!isMobile || backgroundImage) && (
+        <div className="lg:col-span-6 order-2">
+          <div className="glass-morphism rounded-2xl lg:rounded-3xl p-2 lg:p-3 shadow-xl h-full flex flex-col bg-slate-200 dark:bg-dark-bg-secondary">
+            <div className="flex items-center justify-between mb-2 py-1 px-1 lg:px-2">
+              <div className="flex items-center gap-3">
+                <h2 className="text-sm lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">Preview</h2>
+                {/* Interactive Controls - Beside Preview Title */}
+                {backgroundImage && (
+                  <div className="bg-black/5 dark:bg-white/5 backdrop-blur-sm rounded-xl px-3 py-1.5 lg:px-4 lg:py-2 text-xs lg:text-sm border border-black/10 dark:border-white/10">
+                    <div className="flex items-center gap-3 lg:gap-4 text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                        <span>Drag</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                        <span>Zoom</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                      <span>Zoom</span>
-                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-1 lg:gap-2 text-xs text-slate-600 dark:text-dark-text-secondary">
+                <span className="status-indicator text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-lg">
+                  {canvasSize.width} × {canvasSize.height}
+                </span>
+              </div>
+            </div>
+            
+            <section 
+              className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} ${isGestureActive ? 'gesture-active' : ''} flex-1 flex-grow rounded-xl lg:rounded-2xl overflow-hidden min-h-[400px] h-full bg-slate-100 dark:bg-dark-bg-tertiary`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              style={{ minHeight: '400px', height: '100%', isolation: 'isolate', transform: 'translateZ(0)', willChange: 'transform', zIndex: 1 }}
+              aria-label="Image preview and editing area"
+            >
+              <canvas
+                ref={canvasRef}
+                width={canvasSize.width}
+                height={canvasSize.height}
+                className={`w-full h-full min-h-[350px] max-h-[60vh] lg:max-h-[95vh] object-contain bg-slate-50 dark:bg-dark-bg-tertiary ${
+                  backgroundImage ? 'cursor-move' : ''
+                } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isGestureActive ? 'gesture-canvas' : ''}`}
+                onMouseDown={handleStart}
+                onMouseMove={handleMove}
+                onMouseUp={handleEnd}
+                onMouseLeave={handleEnd}
+                onTouchStart={handleStart}
+                onTouchMove={handleMove}
+                onTouchEnd={handleEnd}
+                style={{ 
+                  touchAction: 'none', 
+                  WebkitUserSelect: 'none', 
+                  userSelect: 'none',
+                  transform: 'translateZ(0)',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  willChange: 'transform',
+                  isolation: 'isolate',
+                  zIndex: 2,
+                  background: 'transparent',
+                  position: 'relative',
+                }}
+              />
+              {!backgroundImage && (
+                <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-dark-text-secondary bg-transparent pointer-events-none">
+                  <div className="text-center animate-bounce-gentle">
+                    <PhotoIcon className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 opacity-40" />
+                    <p className="text-lg lg:text-xl font-medium mb-2">Upload your background image</p>
+                    <p className="text-sm lg:text-base text-slate-500 dark:text-slate-400">BUCC frame will be applied automatically</p>
+                    {!frameImage && (
+                      <div className="mt-3 inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Loading BUCC frame...</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
-            </div>
-            <div className="flex items-center gap-1 lg:gap-2 text-xs text-slate-600 dark:text-dark-text-secondary">
-              <span className="status-indicator text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-lg">
-                {canvasSize.width} × {canvasSize.height}
-              </span>
-            </div>
+            
+            </section>
           </div>
-          
-          <section 
-            className={`canvas-container relative ${isDragOver ? 'drag-over' : ''} ${isGestureActive ? 'gesture-active' : ''} flex-1 flex-grow rounded-xl lg:rounded-2xl overflow-hidden min-h-[400px] h-full bg-slate-100 dark:bg-dark-bg-tertiary`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            style={{ minHeight: '400px', height: '100%', isolation: 'isolate', transform: 'translateZ(0)', willChange: 'transform', zIndex: 1 }}
-            aria-label="Image preview and editing area"
-          >
-            <canvas
-              ref={canvasRef}
-              width={canvasSize.width}
-              height={canvasSize.height}
-              className={`w-full h-full min-h-[350px] max-h-[60vh] lg:max-h-[95vh] object-contain bg-slate-50 dark:bg-dark-bg-tertiary ${
-                backgroundImage ? 'cursor-move' : ''
-              } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isGestureActive ? 'gesture-canvas' : ''}`}
-              onMouseDown={handleStart}
-              onMouseMove={handleMove}
-              onMouseUp={handleEnd}
-              onMouseLeave={handleEnd}
-              onTouchStart={handleStart}
-              onTouchMove={handleMove}
-              onTouchEnd={handleEnd}
-              style={{ 
-                touchAction: 'none', 
-                WebkitUserSelect: 'none', 
-                userSelect: 'none',
-                transform: 'translateZ(0)',
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                willChange: 'transform',
-                isolation: 'isolate',
-                zIndex: 2,
-                background: 'transparent',
-                position: 'relative',
-              }}
-            />
-            {!backgroundImage && (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-dark-text-secondary bg-transparent pointer-events-none">
-                <div className="text-center animate-bounce-gentle">
-                  <PhotoIcon className="w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 opacity-40" />
-                  <p className="text-lg lg:text-xl font-medium mb-2">Upload your background image</p>
-                  <p className="text-sm lg:text-base text-slate-500 dark:text-slate-400">BUCC frame will be applied automatically</p>
-                  {!frameImage && (
-                    <div className="mt-3 inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                      <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Loading BUCC frame...</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          
-          </section>
         </div>
-      </div>
+      )}
 
       {/* Left Control Panel - Upload Background */}
       <div className="lg:col-span-3 order-1 space-y-3 lg:space-y-4">
@@ -1226,18 +1231,17 @@ const ImageEditor = () => {
       
       {/* Right Control Panel - Photo Controls */}
       {backgroundImage && (
-        <div className="lg:col-span-3 order-3 space-y-2 lg:space-y-3">
-          <div className="control-panel rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-lg h-full flex flex-col">
-            <div className="flex items-center justify-between mb-3">
+        <div className="lg:col-span-3 order-3 space-y-1 lg:space-y-3">
+          <div className="control-panel rounded-xl lg:rounded-2xl p-2 lg:p-4 shadow-lg h-full flex flex-col">
+            <div className="flex items-center justify-between mb-2 lg:mb-3">
               <h2 className="text-base lg:text-xl font-bold text-slate-800 dark:text-dark-text-primary flex items-center gap-2">
                 <AdjustmentsHorizontalIcon className="w-4 h-4 lg:w-6 lg:h-6 text-green-600 dark:text-green-400" />
                 <span>Photo Controls</span>
               </h2>
             </div>
-            
             {/* Frame Visibility Toggle */}
             {frameImage && (
-              <div className="flex items-center justify-between p-2 lg:p-3 bg-slate-50 dark:bg-dark-bg-tertiary rounded-lg mb-3">
+              <div className="flex items-center justify-between p-2 lg:p-3 bg-slate-50 dark:bg-dark-bg-tertiary rounded-lg mb-2 lg:mb-3">
                 <span className="font-medium text-xs lg:text-base text-slate-700 dark:text-dark-text-primary">Show Frame</span>
                 <button
                   onClick={() => setShowFrame(!showFrame)}
@@ -1254,7 +1258,6 @@ const ImageEditor = () => {
                 </button>
               </div>
             )}
-            
             {/* Zoom Control */}
             <CustomSlider
               min={0.1}
@@ -1266,7 +1269,6 @@ const ImageEditor = () => {
               icon={<MagnifyingGlassIcon className="w-4 h-4" />}
               valueLabel={`${zoom.toFixed(1)}x`}
             />
-
             {/* Brightness Control */}
             <CustomSlider
               min={50}
@@ -1277,7 +1279,6 @@ const ImageEditor = () => {
               icon={<SunIcon className="w-4 h-4" />}
               valueLabel={`${brightness}%`}
             />
-
             {/* Contrast Control */}
             <CustomSlider
               min={50}
@@ -1290,7 +1291,7 @@ const ImageEditor = () => {
             />
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-2 pt-3">
+            <div className="flex flex-col gap-2 pt-2 lg:pt-3">
               <button
                 onClick={handleReset}
                 className="btn-secondary w-full flex items-center justify-center gap-2 py-2 lg:py-3 text-sm lg:text-base"
@@ -1298,7 +1299,6 @@ const ImageEditor = () => {
                 <ArrowUturnLeftIcon className="w-4 h-4" />
                 <span>Reset & Auto-fit</span>
               </button>
-              
               {/* Image Resolution Button - Only show when backgroundImage is loaded */}
               {backgroundImage && frameImage && (
                 <button
@@ -1313,7 +1313,6 @@ const ImageEditor = () => {
                   <span>Image Resolution</span>
                 </button>
               )}
-              
               <button
                 onClick={() => handleDownload(1.0)}
                 disabled={isProcessing}
