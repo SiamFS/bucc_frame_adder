@@ -325,16 +325,54 @@ const ImageEditor = () => {
     // All user settings are preserved regardless of resolution selection
   }, [canvasSize.width, canvasSize.height])
 
+  // Helper: Crop and scale image to match frame's native size/aspect ratio
+  const adjustImageToFrame = (img, frameWidth, frameHeight) => {
+    // Calculate aspect ratios
+    const imgAspect = img.width / img.height;
+    const frameAspect = frameWidth / frameHeight;
+    let sx, sy, sw, sh;
+    if (imgAspect > frameAspect) {
+      // Image is wider: crop sides
+      sh = img.height;
+      sw = sh * frameAspect;
+      sx = (img.width - sw) / 2;
+      sy = 0;
+    } else {
+      // Image is taller: crop top/bottom
+      sw = img.width;
+      sh = sw / frameAspect;
+      sx = 0;
+      sy = (img.height - sh) / 2;
+    }
+    // Draw cropped/scaled image to new canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = frameWidth;
+    canvas.height = frameHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, frameWidth, frameHeight);
+    // Create new Image from canvas
+    const adjustedImg = new window.Image();
+    adjustedImg.src = canvas.toDataURL('image/png');
+    // Wait for load before returning
+    return new Promise((resolve) => {
+      adjustedImg.onload = () => resolve(adjustedImg);
+    });
+  };
+
   // Helper function to handle file upload processing
   const processUploadedFile = useCallback(async (file, resetPosition = true) => {
     setIsProcessing(true)
     try {
       const img = await validateAndProcessFile(file, 'background')
-      setBackgroundImage(img)
+      // If frameImage is loaded, adjust background to frame's native size/aspect
+      let adjustedImg = img;
+      if (frameImage) {
+        adjustedImg = await adjustImageToFrame(img, frameImage.width, frameImage.height);
+      }
+      setBackgroundImage(adjustedImg)
       if (resetPosition) {
         setPosition({ x: 0, y: 0 }) // Reset position
       }
-      
       // Auto-scroll to preview on mobile after image upload
       setTimeout(() => {
         if (window.innerWidth < 1024) { // lg breakpoint
@@ -352,7 +390,7 @@ const ImageEditor = () => {
     } finally {
       setIsProcessing(false)
     }
-  }, [validateAndProcessFile, showNotification])
+  }, [validateAndProcessFile, showNotification, frameImage])
 
   const handleBackgroundUpload = useCallback(async (event) => {
     const file = event.target.files?.[0]
@@ -1349,10 +1387,7 @@ const ImageEditor = () => {
             </div>
             
             <div className="mt-3 lg:mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-              <p className="text-xs lg:text-sm text-blue-700 dark:text-blue-300">
-                <strong>Quality Priority:</strong> Export resolutions are based on your background image quality. 
-                Frame will be upscaled when needed to maintain your image's resolution (marked as "Frame Upscaled").
-              </p>
+              {/* Removed quality priority note as no longer needed */}
             </div>
           </div>
         </div>
