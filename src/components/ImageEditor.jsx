@@ -323,6 +323,17 @@ const ImageEditor = () => {
     
     // Never reset position, zoom, brightness, contrast, or any other user adjustments
     // All user settings are preserved regardless of resolution selection
+    
+    // Scroll back to preview section smoothly after resolution selection
+    setTimeout(() => {
+      const previewSection = document.querySelector('.canvas-container')
+      if (previewSection) {
+        previewSection.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        })
+      }
+    }, 200) // Small delay to ensure canvas size update is processed
   }, [canvasSize.width, canvasSize.height])
 
   // Helper: Crop and scale image to match frame's native size/aspect ratio
@@ -909,14 +920,16 @@ const ImageEditor = () => {
         setProcessingProgress(100);
         setIsProcessing(false);
         setTimeout(() => setProcessingProgress(0), 1000);
-        // Scroll to caption section after download, with offset for fixed navbar
-        const captionSection = document.getElementById('caption-section');
-        if (captionSection) {
-          captionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          setTimeout(() => {
-            window.scrollBy({ top: -80, left: 0, behavior: 'smooth' }); // Increased offset for more space above
-          }, 400); // Wait for scrollIntoView to finish
-        }
+        // Scroll to caption section after download with smooth behavior
+        setTimeout(() => {
+          const captionSection = document.getElementById('caption-section');
+          if (captionSection) {
+            captionSection.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }
+        }, 500); // Small delay to ensure download completes
       }, 'image/png', quality);
     } catch (error) {
       showNotification('Download failed: ' + error.message, 'error');
@@ -1302,7 +1315,23 @@ const ImageEditor = () => {
               {/* Image Resolution Button - Only show when backgroundImage is loaded */}
               {backgroundImage && frameImage && (
                 <button
-                  onClick={() => setShowResolutionSelector(!showResolutionSelector)}
+                  onClick={() => {
+                    const newState = !showResolutionSelector;
+                    setShowResolutionSelector(newState);
+                    
+                    // If opening the resolution selector, scroll to it smoothly
+                    if (newState) {
+                      setTimeout(() => {
+                        const resolutionSection = document.querySelector('[data-resolution-selector]');
+                        if (resolutionSection) {
+                          resolutionSection.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                          });
+                        }
+                      }, 100); // Small delay to ensure the element is rendered
+                    }
+                  }}
                   className={`w-full flex items-center justify-center gap-2 py-2 lg:py-3 text-sm lg:text-base transition-all duration-200 ${
                     showResolutionSelector 
                       ? 'btn-primary shadow-blue-500/50 shadow-lg ring-2 ring-blue-300 dark:ring-blue-500' 
@@ -1337,7 +1366,7 @@ const ImageEditor = () => {
 
       {/* Resolution Selector - Horizontal below editor */}
       {showResolutionSelector && backgroundImage && frameImage && (
-        <div className="lg:col-span-12 order-4 mt-3 lg:mt-4">
+        <div className="lg:col-span-12 order-4 mt-3 lg:mt-4" data-resolution-selector>
           <div className="glass-morphism rounded-xl lg:rounded-2xl p-3 lg:p-4 shadow-lg">
             <div className="flex items-center justify-between mb-3 lg:mb-4">
               <h3 className="text-base lg:text-lg font-bold text-slate-800 dark:text-dark-text-primary">
@@ -1359,8 +1388,8 @@ const ImageEditor = () => {
                   onClick={() => handleResolutionSelect(resolution)}
                   className={`p-3 lg:p-4 rounded-lg lg:rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
                     canvasSize.width === resolution.width && canvasSize.height === resolution.height
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'border-slate-200 dark:border-dark-border-primary hover:border-blue-300 bg-white dark:bg-dark-bg-secondary'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-md'
+                      : 'border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-400 bg-white dark:bg-dark-bg-secondary hover:bg-blue-50 dark:hover:bg-blue-900/20'
                   }`}
                 >
                   <div className="text-center">

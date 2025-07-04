@@ -15,8 +15,8 @@ const FeaturesGrid = () => (
           <div className="w-12 h-12 bg-gradient-to-br from-accent-400 to-accent-600 dark:from-accent-300 dark:to-accent-500 rounded-xl mx-auto mb-4 flex items-center justify-center">
             <SparklesIcon className="w-6 h-6 text-white" />
           </div>
-          <h3 className="font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Professional Quality</h3>
-          <p className="text-sm text-slate-600 dark:text-dark-text-secondary">Export in multiple resolutions up to 4K</p>
+          <h3 className="font-semibold text-slate-800 dark:text-dark-text-primary mb-2">Flexible Export Options</h3>
+          <p className="text-sm text-slate-600 dark:text-dark-text-secondary">Choose from multiple export resolutions to suit your needs</p>
         </div>
       </div>
     </div>
