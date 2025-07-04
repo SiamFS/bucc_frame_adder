@@ -44,8 +44,10 @@ const CustomSlider = ({
     const percentage = Math.max(0, Math.min(1, offsetX / rect.width))
     const newValue = min + percentage * (max - min)
     
+    // Ensure step is a positive number
+    const safeStep = (typeof step === 'number' && step > 0) ? step : 1;
     // Apply step
-    const steppedValue = Math.round(newValue / step) * step
+    const steppedValue = Math.round(newValue / safeStep) * safeStep
     const clampedValue = Math.max(min, Math.min(max, steppedValue))
     
     onChange(clampedValue)
